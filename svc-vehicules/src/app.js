@@ -6,5 +6,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'svc-vehicules' });
 });
 
-const PORT = process.env.PORT || 3000;
+app.get('/api/v1/vehicules', (req, res) => {
+  res.json({ data: [], message: 'Service Véhicules opérationnel' });
+});
+
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`[svc-vehicules] Port ${PORT}`));
