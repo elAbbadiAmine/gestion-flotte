@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: flotte-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:23.0.0
+        imagePullPolicy: Never
+        args: ["start-dev"]
+        ports:
+        - containerPort: 8080
+        env:
+        - name: KEYCLOAK_ADMIN
+          value: "admin"
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: "admin_password_dev"
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "500m"
+          requests:
+            memory: 256Mi
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: flotte-dev
+spec:
+  selector:
+    app: keycloak
+  ports:
+  - port: 8080
+    targetPort: 8080

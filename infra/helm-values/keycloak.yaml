@@ -1,0 +1,14 @@
+auth:
+  adminUser: admin
+  adminPassword: "admin_password_dev"
+
+resources:
+  limits:
+    memory: 512Mi
+    cpu: "500m"
+  requests:
+    memory: 256Mi
+    cpu: "250m"
+
+persistence:
+  enabled: false
