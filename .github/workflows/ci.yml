@@ -32,7 +32,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} \
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/$REPO/${{ matrix.service }}:${{ github.sha }} \
             ./${{ matrix.service }}
 
       - name: Login to GitHub Container Registry
@@ -46,7 +47,8 @@ jobs:
       - name: Push image
         if: github.ref == 'refs/heads/master'
         run: |
-          docker push ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker push ghcr.io/$REPO/${{ matrix.service }}:${{ github.sha }}
 
   build-maintenance:
     runs-on: ubuntu-latest
@@ -65,7 +67,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/svc-maintenance:${{ github.sha }} \
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/$REPO/svc-maintenance:${{ github.sha }} \
             ./svc-maintenance
 
       - name: Login to GitHub Container Registry
@@ -79,4 +82,5 @@ jobs:
       - name: Push image
         if: github.ref == 'refs/heads/master'
         run: |
-          docker push ghcr.io/${{ github.repository }}/svc-maintenance:${{ github.sha }}
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker push ghcr.io/$REPO/svc-maintenance:${{ github.sha }}
