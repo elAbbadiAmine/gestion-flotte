@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-maintenance
+  namespace: flotte-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: svc-maintenance
+  template:
+    metadata:
+      labels:
+        app: svc-maintenance
+    spec:
+      containers:
+      - name: svc-maintenance
+        image: svc-maintenance:dev
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3005
+        env:
+        - name: PORT
+          value: "3005"
+        resources:
+          limits:
+            memory: 256Mi
+            cpu: "250m"
+          requests:
+            memory: 128Mi
+            cpu: "100m"
