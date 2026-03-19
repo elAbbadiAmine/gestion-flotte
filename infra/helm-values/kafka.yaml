@@ -1,0 +1,36 @@
+image:
+  registry: docker.io
+  repository: bitnami/kafka
+  tag: 3.6.1
+  pullPolicy: Never
+
+replicaCount: 1
+kraft:
+  enabled: true
+listeners:
+  client:
+    protocol: PLAINTEXT
+persistence:
+  enabled: false
+resources:
+  limits:
+    memory: 512Mi
+    cpu: "500m"
+  requests:
+    memory: 256Mi
+    cpu: "250m"
+provisioning:
+  enabled: true
+  topics:
+    - name: flotte.vehicules
+      partitions: 1
+      replicationFactor: 1
+    - name: flotte.trajets
+      partitions: 1
+      replicationFactor: 1
+    - name: flotte.maintenance
+      partitions: 1
+      replicationFactor: 1
+    - name: flotte.alertes
+      partitions: 1
+      replicationFactor: 1
