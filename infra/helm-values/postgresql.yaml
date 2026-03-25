@@ -3,7 +3,6 @@ auth:
   username: fleet_user
   password: "fleet_password_dev"
   postgresPassword: "admin_password_dev"
-
 primary:
   persistence:
     enabled: true

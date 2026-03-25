@@ -10,7 +10,6 @@ grafana:
     requests:
       memory: 128Mi
       cpu: "100m"
-
 prometheus:
   prometheusSpec:
     retention: 24h
@@ -21,12 +20,9 @@ prometheus:
       requests:
         memory: 256Mi
         cpu: "250m"
-
 alertmanager:
   enabled: false
-
 nodeExporter:
   enabled: false
-
 kubeStateMetrics:
   enabled: true

@@ -1,8 +1,6 @@
 mode: deployment
-
 image:
   repository: otel/opentelemetry-collector-contrib
-
 config:
   receivers:
     otlp:
@@ -11,10 +9,8 @@ config:
           endpoint: 0.0.0.0:4317
         http:
           endpoint: 0.0.0.0:4318
-
   processors:
     batch: {}
-
   exporters:
     otlp:
       endpoint: jaeger-collector:4317
@@ -24,7 +20,6 @@ config:
       endpoint: "0.0.0.0:8889"
     debug:
       verbosity: basic
-
   service:
     pipelines:
       traces:
@@ -39,7 +34,6 @@ config:
         receivers: [otlp]
         processors: [batch]
         exporters: [debug]
-
 resources:
   limits:
     memory: 256Mi

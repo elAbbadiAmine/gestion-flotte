@@ -1,11 +1,9 @@
 name: CI Pipeline
-
 on:
   push:
     branches: [master, develop]
   pull_request:
     branches: [master]
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -45,7 +43,6 @@ jobs:
         run: |
           REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           docker push ghcr.io/$REPO/${{ matrix.service }}:${{ github.sha }}
-
   build-maintenance:
     runs-on: ubuntu-latest
     permissions:

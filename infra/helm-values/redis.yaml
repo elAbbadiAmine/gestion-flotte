@@ -1,6 +1,5 @@
 auth:
   password: "redis_password_dev"
-
 master:
   persistence:
     enabled: true
@@ -12,6 +11,5 @@ master:
     requests:
       memory: 128Mi
       cpu: "100m"
-
 replica:
   replicaCount: 0

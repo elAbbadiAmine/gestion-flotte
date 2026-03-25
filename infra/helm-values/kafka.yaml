@@ -3,7 +3,6 @@ image:
   repository: bitnami/kafka
   tag: 3.6.1
   pullPolicy: Never
-
 replicaCount: 1
 kraft:
   enabled: true
