@@ -1,0 +1,75 @@
+const service = require('../../src/services/vehicule.service');
+const repo = require('../../src/repositories/vehicule.repository');
+const kafka = require('../../src/config/kafka');
+
+// Mock des dépendances
+jest.mock('../../src/repositories/vehicule.repository');
+jest.mock('../../src/config/kafka', () => ({
+  publishEvent: jest.fn().mockResolvedValue(),
+  connectProducer: jest.fn().mockResolvedValue(),
+}));
+
+const mockVehicule = {
+  id: 'uuid-123',
+  immatriculation: 'AB-123-CD',
+  marque: 'Renault',
+  modele: 'Clio',
+  annee: 2022,
+  statut: 'disponible',
+  kilometrage: 1000,
+};
+
+describe('VehiculeService', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('getAllVehicules retourne une liste', async () => {
+    repo.findAll.mockResolvedValue([mockVehicule]);
+    const result = await service.getAllVehicules({});
+    expect(result).toHaveLength(1);
+    expect(repo.findAll).toHaveBeenCalledTimes(1);
+  });
+
+  test('getVehiculeById retourne un véhicule existant', async () => {
+    repo.findById.mockResolvedValue(mockVehicule);
+    const result = await service.getVehiculeById('uuid-123');
+    expect(result.immatriculation).toBe('AB-123-CD');
+  });
+
+  test('getVehiculeById throw si non trouvé', async () => {
+    repo.findById.mockResolvedValue(null);
+    await expect(service.getVehiculeById('inexistant')).rejects.toThrow('Véhicule non trouvé');
+  });
+
+  test('createVehicule crée et publie un event Kafka', async () => {
+    repo.create.mockResolvedValue(mockVehicule);
+    const result = await service.createVehicule(mockVehicule);
+    expect(result.immatriculation).toBe('AB-123-CD');
+    expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', {
+      type: 'vehicule.created',
+      payload: mockVehicule,
+    });
+  });
+
+  test('updateVehicule met à jour et publie un event Kafka', async () => {
+    repo.update.mockResolvedValue({ ...mockVehicule, kilometrage: 2000 });
+    const result = await service.updateVehicule('uuid-123', { kilometrage: 2000 });
+    expect(result.kilometrage).toBe(2000);
+    expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', expect.objectContaining({
+      type: 'vehicule.updated',
+    }));
+  });
+
+  test('deleteVehicule supprime et publie un event Kafka', async () => {
+    repo.remove.mockResolvedValue(1);
+    await service.deleteVehicule('uuid-123');
+    expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', {
+      type: 'vehicule.deleted',
+      payload: { id: 'uuid-123' },
+    });
+  });
+
+  test('deleteVehicule throw si non trouvé', async () => {
+    repo.remove.mockResolvedValue(0);
+    await expect(service.deleteVehicule('inexistant')).rejects.toThrow('Véhicule non trouvé');
+  });
+});
