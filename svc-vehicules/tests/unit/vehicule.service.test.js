@@ -1,14 +1,28 @@
+jest.mock('kafkajs', () => ({
+  Kafka: jest.fn().mockImplementation(() => ({
+    producer: jest.fn().mockReturnValue({
+      connect: jest.fn(), send: jest.fn(), disconnect: jest.fn(),
+    }),
+    consumer: jest.fn().mockReturnValue({
+      connect: jest.fn(), subscribe: jest.fn(), run: jest.fn(), disconnect: jest.fn(),
+    }),
+  })),
+}));
+jest.mock('../../src/config/database', () => ({
+  define: jest.fn(() => ({
+    findAll: jest.fn(), findOne: jest.fn(),
+    create: jest.fn(), update: jest.fn(), destroy: jest.fn(),
+  })),
+  authenticate: jest.fn(),
+  sync: jest.fn(),
+}));
+jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+
 const service = require('../../src/services/vehicule.service');
 const repo = require('../../src/repositories/vehicule.repository');
 const kafka = require('../../src/config/kafka');
 
 jest.mock('../../src/repositories/vehicule.repository');
-jest.mock('../../src/config/kafka', () => ({
-  publishEvent: jest.fn().mockResolvedValue(),
-  connectProducer: jest.fn().mockResolvedValue(),
-}));
-jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
-
 
 const mockVehicule = {
   id: 'uuid-123',
@@ -43,6 +57,7 @@ describe('VehiculeService', () => {
 
   test('createVehicule crée et publie un event Kafka', async () => {
     repo.create.mockResolvedValue(mockVehicule);
+    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     const result = await service.createVehicule(mockVehicule);
     expect(result.immatriculation).toBe('AB-123-CD');
     expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', {
@@ -53,6 +68,7 @@ describe('VehiculeService', () => {
 
   test('updateVehicule met à jour et publie un event Kafka', async () => {
     repo.update.mockResolvedValue({ ...mockVehicule, kilometrage: 2000 });
+    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     const result = await service.updateVehicule('uuid-123', { kilometrage: 2000 });
     expect(result.kilometrage).toBe(2000);
     expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', expect.objectContaining({
@@ -62,6 +78,7 @@ describe('VehiculeService', () => {
 
   test('deleteVehicule supprime et publie un event Kafka', async () => {
     repo.remove.mockResolvedValue(1);
+    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     await service.deleteVehicule('uuid-123');
     expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', {
       type: 'vehicule.deleted',
