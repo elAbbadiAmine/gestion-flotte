@@ -1,6 +1,12 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize(process.env.DATABASE_URL || 'postgres://postgres:postgres@postgresql-fleet:5432/vehicules', {
+const dbUrl = process.env.DATABASE_URL || process.env.DB_URL;
+
+if (!dbUrl) {
+  console.error("Erreur : Aucune URL de base de données n'est configurée !");
+}
+
+const sequelize = new Sequelize(dbUrl, {
   dialect: 'postgres',
   logging: false,
 });

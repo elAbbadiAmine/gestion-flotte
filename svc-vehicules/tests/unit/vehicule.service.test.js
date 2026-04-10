@@ -2,12 +2,13 @@ const service = require('../../src/services/vehicule.service');
 const repo = require('../../src/repositories/vehicule.repository');
 const kafka = require('../../src/config/kafka');
 
-// Mock des dépendances
 jest.mock('../../src/repositories/vehicule.repository');
 jest.mock('../../src/config/kafka', () => ({
   publishEvent: jest.fn().mockResolvedValue(),
   connectProducer: jest.fn().mockResolvedValue(),
 }));
+jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+
 
 const mockVehicule = {
   id: 'uuid-123',
