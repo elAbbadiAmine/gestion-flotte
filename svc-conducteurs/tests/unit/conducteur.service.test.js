@@ -1,12 +1,21 @@
 const service = require('../../src/services/conducteur.service');
 const repo = require('../../src/repositories/conducteur.repository');
-const kafka = require('../../../svc-vehicules/src/config/kafka');
+const kafka = require('../../src/config/kafka');
 
 jest.mock('../../src/repositories/conducteur.repository');
 jest.mock('../../src/config/kafka');
-jest.mock('../../src/config/database', () => ({}));
-jest.mock('../../src/config/database', () => ({}));
 jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+jest.mock('../../src/config/database', () => ({
+  define: jest.fn(() => ({
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    destroy: jest.fn(),
+  })),
+  authenticate: jest.fn(),
+  sync: jest.fn(),
+}));
 
 const demain = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 const hier = new Date(Date.now() - 86400000).toISOString().split('T')[0];
