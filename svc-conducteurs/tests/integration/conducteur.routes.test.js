@@ -3,7 +3,12 @@ const express = require('express');
 const service = require('../../src/services/conducteur.service');
 
 jest.mock('../../src/services/conducteur.service');
-jest.mock('../../src/config/kafka');
+jest.mock('kafkajs', () => ({
+  Kafka: jest.fn().mockImplementation(() => ({
+    producer: jest.fn().mockReturnValue({ connect: jest.fn(), send: jest.fn(), disconnect: jest.fn() }),
+    consumer: jest.fn().mockReturnValue({ connect: jest.fn(), subscribe: jest.fn(), run: jest.fn(), disconnect: jest.fn() }),
+  })),
+}));
 jest.mock('../../src/config/database', () => ({
   define: jest.fn(() => ({
     findAll: jest.fn(), findOne: jest.fn(),
