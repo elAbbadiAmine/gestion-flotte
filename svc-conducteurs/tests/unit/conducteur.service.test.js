@@ -4,6 +4,8 @@ const kafka = require('../../../svc-vehicules/src/config/kafka');
 
 jest.mock('../../src/repositories/conducteur.repository');
 jest.mock('../../src/config/kafka');
+jest.mock('../../src/config/database', () => ({}));
+jest.mock('../../src/config/database', () => ({}));
 jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
 
 const demain = new Date(Date.now() + 86400000).toISOString().split('T')[0];
