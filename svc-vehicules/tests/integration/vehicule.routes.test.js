@@ -1,14 +1,37 @@
+jest.mock('kafkajs', () => ({
+  Kafka: jest.fn().mockImplementation(() => ({
+    producer: jest.fn().mockReturnValue({
+      connect: jest.fn(), send: jest.fn(), disconnect: jest.fn(),
+    }),
+    consumer: jest.fn().mockReturnValue({
+      connect: jest.fn(), subscribe: jest.fn(), run: jest.fn(), disconnect: jest.fn(),
+    }),
+  })),
+}));
+jest.mock('../../src/config/database', () => ({
+  define: jest.fn(() => ({
+    findAll: jest.fn(), findOne: jest.fn(),
+    create: jest.fn(), update: jest.fn(), destroy: jest.fn(),
+  })),
+  authenticate: jest.fn(),
+  sync: jest.fn(),
+}));
+jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+jest.mock('../../src/config/tracing', () => ({}));
+jest.mock('../../src/middleware/auth.middleware', () => ({
+  authenticate: (req, res, next) => next(),
+  authorize: () => (req, res, next) => next(),
+}));
+jest.mock('../../src/services/vehicule.service');
+
 const request = require('supertest');
 const express = require('express');
-const routes = require('../../src/middleware/routes');
+const routes = require('../../src/routes/vehicule.routes');
 const service = require('../../src/services/vehicule.service');
-
-jest.mock('../../src/services/vehicule.service');
-jest.mock('../../src/config/tracing', () => {});
 
 const app = express();
 app.use(express.json());
-app.use('/api/v1', routes);
+app.use('/api/v1/vehicules', routes);
 
 const mockVehicule = {
   id: 'uuid-123',
