@@ -1,16 +1,28 @@
 const request = require('supertest');
 const express = require('express');
-const routes = require('../../src/middleware/routes');
 const service = require('../../src/services/conducteur.service');
 
 jest.mock('../../src/services/conducteur.service');
-jest.mock('../../src/config/tracing', () => ({ startTracing: jest.fn() }));
+jest.mock('../../src/config/kafka');
+jest.mock('../../src/config/database', () => ({
+  define: jest.fn(() => ({
+    findAll: jest.fn(), findOne: jest.fn(),
+    create: jest.fn(), update: jest.fn(), destroy: jest.fn(),
+  })),
+  authenticate: jest.fn(),
+  sync: jest.fn(),
+}));
+jest.mock('../../src/config/tracing', () => ({}));
 jest.mock('../../src/config/logger', () => ({
-  info: jest.fn(),
-  error: jest.fn(),
-  child: () => ({ info: jest.fn(), error: jest.fn() })
+  info: jest.fn(), error: jest.fn(), warn: jest.fn(),
+  child: () => ({ info: jest.fn(), error: jest.fn() }),
+}));
+jest.mock('../../src/middleware/auth.middleware', () => ({
+  authenticate: (req, res, next) => next(),
+  authorize: () => (req, res, next) => next(),
 }));
 
+const routes = require('../../src/routes/conducteur.routes');
 const app = express();
 app.use(express.json());
 app.use('/', routes);
@@ -24,7 +36,7 @@ const mockConducteur = {
   numeroPermis: 'PERM-789',
   categoriesPermis: ['B', 'D'],
   dateExpirationPermis: '2030-01-01',
-  statut: 'actif'
+  statut: 'actif',
 };
 
 describe('Routes /api/v1/conducteurs', () => {
