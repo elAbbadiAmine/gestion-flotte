@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-maintenance
+  namespace: flotte-dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: svc-maintenance
+  template:
+    metadata:
+      labels:
+        app: svc-maintenance
+    spec:
+      containers:
+        - name: svc-maintenance
+          image: svc-maintenance:v2
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3003
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_URL_MAINTENANCE
+            - name: KAFKA_BROKER
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: KAFKA_BROKER
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector-opentelemetry-collector:4317
+            - name: PORT
+              value: "3003"
+            - name: KEYCLOAK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: KEYCLOAK_URL
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: KEYCLOAK_REALM
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-maintenance
+  namespace: flotte-dev
+spec:
+  selector:
+    app: svc-maintenance
+  ports:
+    - port: 3003
+      targetPort: 3003
+  type: ClusterIP

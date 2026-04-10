@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: flotte-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: api-gateway:v1
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 4000
+        env:
+        - name: PORT
+          value: "4000"
+        - name: SVC_VEHICULES_URL
+          value: "http://svc-vehicules:3001"
+        - name: SVC_CONDUCTEURS_URL
+          value: "http://svc-conducteurs:3002"
+        - name: SVC_MAINTENANCE_URL
+          value: "http://svc-maintenance:3003"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+          limits:
+            memory: 256Mi
+            cpu: "500m"
+          requests:
+            memory: 128Mi
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: flotte-dev
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - port: 4000
+    targetPort: 4000

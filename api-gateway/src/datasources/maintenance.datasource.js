@@ -1,17 +1,17 @@
 const axios = require('axios');
-const BASE_URL = process.env.SVC_VEHICULES_URL || 'http://svc-vehicules:3001';
+const BASE_URL = process.env.SVC_VEHICULES_URL || 'http://svc-maintenance:3003';
 const pick = (headers) => ({
   ...(headers.authorization && { authorization: headers.authorization }),
 });
 const getAll = async (filters = {}, headers = {}) => {
   const params = new URLSearchParams();
   if (filters.statut) params.append('statut', filters.statut);
-  const res = await axios.get(`${BASE_URL}/api/v1/vehicules?${params}`, { headers: pick(headers) });
+  const res = await axios.get(`${BASE_URL}/api/v1/maintenances?${params}`, { headers: pick(headers) });
   return res.data.data;
 };
 const getById = async (id, headers = {}) => {
   try {
-    const res = await axios.get(`${BASE_URL}/api/v1/vehicules/${id}`, { headers: pick(headers) });
+    const res = await axios.get(`${BASE_URL}/api/v1/maintenances/${id}`, { headers: pick(headers) });
     return res.data.data;
   } catch (e) {
     if (e.response?.status === 404) return null;
@@ -19,15 +19,15 @@ const getById = async (id, headers = {}) => {
   }
 };
 const create = async (input, headers = {}) => {
-  const res = await axios.post(`${BASE_URL}/api/v1/vehicules`, input, { headers: pick(headers) });
+  const res = await axios.post(`${BASE_URL}/api/v1/maintenances`, input, { headers: pick(headers) });
   return res.data.data;
 };
 const update = async (id, input, headers = {}) => {
-  const res = await axios.put(`${BASE_URL}/api/v1/vehicules/${id}`, input, { headers: pick(headers) });
+  const res = await axios.put(`${BASE_URL}/api/v1/maintenances/${id}`, input, { headers: pick(headers) });
   return res.data.data;
 };
 const remove = async (id, headers = {}) => {
-  await axios.delete(`${BASE_URL}/api/v1/vehicules/${id}`, { headers: pick(headers) });
+  await axios.delete(`${BASE_URL}/api/v1/maintenances/${id}`, { headers: pick(headers) });
   return true;
 };
 module.exports = { getAll, getById, create, update, remove };
