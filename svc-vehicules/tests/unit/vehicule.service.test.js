@@ -17,12 +17,15 @@ jest.mock('../../src/config/database', () => ({
   sync: jest.fn(),
 }));
 jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+jest.mock('../../src/config/kafka', () => ({
+  connectProducer: jest.fn().mockResolvedValue(),
+  publishEvent: jest.fn().mockResolvedValue(),
+}));
+jest.mock('../../src/repositories/vehicule.repository');
 
 const service = require('../../src/services/vehicule.service');
 const repo = require('../../src/repositories/vehicule.repository');
 const kafka = require('../../src/config/kafka');
-
-jest.mock('../../src/repositories/vehicule.repository');
 
 const mockVehicule = {
   id: 'uuid-123',
@@ -57,7 +60,6 @@ describe('VehiculeService', () => {
 
   test('createVehicule crée et publie un event Kafka', async () => {
     repo.create.mockResolvedValue(mockVehicule);
-    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     const result = await service.createVehicule(mockVehicule);
     expect(result.immatriculation).toBe('AB-123-CD');
     expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', {
@@ -68,7 +70,6 @@ describe('VehiculeService', () => {
 
   test('updateVehicule met à jour et publie un event Kafka', async () => {
     repo.update.mockResolvedValue({ ...mockVehicule, kilometrage: 2000 });
-    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     const result = await service.updateVehicule('uuid-123', { kilometrage: 2000 });
     expect(result.kilometrage).toBe(2000);
     expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', expect.objectContaining({
@@ -78,7 +79,6 @@ describe('VehiculeService', () => {
 
   test('deleteVehicule supprime et publie un event Kafka', async () => {
     repo.remove.mockResolvedValue(1);
-    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     await service.deleteVehicule('uuid-123');
     expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', {
       type: 'vehicule.deleted',
