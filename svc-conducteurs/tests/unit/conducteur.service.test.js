@@ -1,15 +1,10 @@
 jest.mock('kafkajs', () => ({
   Kafka: jest.fn().mockImplementation(() => ({
     producer: jest.fn().mockReturnValue({
-      connect: jest.fn(),
-      send: jest.fn(),
-      disconnect: jest.fn(),
+      connect: jest.fn(), send: jest.fn(), disconnect: jest.fn(),
     }),
     consumer: jest.fn().mockReturnValue({
-      connect: jest.fn(),
-      subscribe: jest.fn(),
-      run: jest.fn(),
-      disconnect: jest.fn(),
+      connect: jest.fn(), subscribe: jest.fn(), run: jest.fn(), disconnect: jest.fn(),
     }),
   })),
 }));
@@ -22,12 +17,15 @@ jest.mock('../../src/config/database', () => ({
   sync: jest.fn(),
 }));
 jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+jest.mock('../../src/config/kafka', () => ({
+  connectProducer: jest.fn().mockResolvedValue(),
+  publishEvent: jest.fn().mockResolvedValue(),
+}));
+jest.mock('../../src/repositories/conducteur.repository');
 
 const service = require('../../src/services/conducteur.service');
 const repo = require('../../src/repositories/conducteur.repository');
 const kafka = require('../../src/config/kafka');
-
-jest.mock('../../src/repositories/conducteur.repository');
 
 const demain = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 const hier = new Date(Date.now() - 86400000).toISOString().split('T')[0];
@@ -70,7 +68,6 @@ describe('getConducteurById', () => {
 describe('createConducteur', () => {
   test('crée et publie un event', async () => {
     repo.create.mockResolvedValue(conducteurFixture);
-    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     const result = await service.createConducteur({ ...conducteurFixture });
     expect(kafka.publishEvent).toHaveBeenCalledWith('conducteurs', expect.objectContaining({ type: 'conducteur.created' }));
     expect(result.id).toBe('uuid-1');
@@ -90,7 +87,6 @@ describe('createConducteur', () => {
 describe('updateConducteur', () => {
   test('met à jour et publie', async () => {
     repo.update.mockResolvedValue({ ...conducteurFixture, nom: 'Martin' });
-    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     const result = await service.updateConducteur('uuid-1', { nom: 'Martin' });
     expect(result.nom).toBe('Martin');
     expect(kafka.publishEvent).toHaveBeenCalledWith('conducteurs', expect.objectContaining({ type: 'conducteur.updated' }));
@@ -105,7 +101,6 @@ describe('updateConducteur', () => {
 describe('deleteConducteur', () => {
   test('supprime et publie', async () => {
     repo.remove.mockResolvedValue(1);
-    jest.spyOn(kafka, 'publishEvent').mockResolvedValue();
     await service.deleteConducteur('uuid-1');
     expect(kafka.publishEvent).toHaveBeenCalledWith('conducteurs', expect.objectContaining({ type: 'conducteur.deleted' }));
   });
