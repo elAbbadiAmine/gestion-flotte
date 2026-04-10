@@ -1,26 +1,13 @@
 const ds = require('../datasources/vehicule.datasource');
-
 const resolvers = {
   Query: {
-    vehicules: async (_, { statut }) => {
-      return ds.getAll({ statut });
-    },
-    vehicule: async (_, { id }) => {
-      return ds.getById(id);
-    },
+    vehicules: async (_, { statut }, { headers }) => ds.getAll({ statut }, headers),
+    vehicule: async (_, { id }, { headers }) => ds.getById(id, headers),
   },
-
   Mutation: {
-    createVehicule: async (_, { input }) => {
-      return ds.create(input);
-    },
-    updateVehicule: async (_, { id, input }) => {
-      return ds.update(id, input);
-    },
-    deleteVehicule: async (_, { id }) => {
-      return ds.remove(id);
-    },
+    createVehicule: async (_, { input }, { headers }) => ds.create(input, headers),
+    updateVehicule: async (_, { id, input }, { headers }) => ds.update(id, input, headers),
+    deleteVehicule: async (_, { id }, { headers }) => ds.remove(id, headers),
   },
 };
-
 module.exports = resolvers;
