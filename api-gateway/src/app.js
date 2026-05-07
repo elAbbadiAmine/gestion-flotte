@@ -6,11 +6,13 @@ const { json } = require('express');
 const vehiculeTypeDefs = require('./schema/vehicule.schema');
 const conducteurTypeDefs = require('./schema/conducteur.schema');
 const maintenanceTypeDefs = require('./schema/maintenance.schema');
+const localisationTypeDefs = require('./schema/localisation.schema');
 const vehiculeResolvers = require('./resolvers/vehicule.resolvers');
 const conducteurResolvers = require('./resolvers/conducteur.resolvers');
 const maintenanceResolvers = require('./resolvers/maintenance.resolvers');
-const typeDefs = mergeTypeDefs([vehiculeTypeDefs, conducteurTypeDefs, maintenanceTypeDefs]);
-const resolvers = mergeResolvers([vehiculeResolvers, conducteurResolvers, maintenanceResolvers]);
+const localisationResolvers = require('./resolvers/localisation.resolvers');
+const typeDefs = mergeTypeDefs([vehiculeTypeDefs, conducteurTypeDefs, maintenanceTypeDefs, localisationTypeDefs]);
+const resolvers = mergeResolvers([vehiculeResolvers, conducteurResolvers, maintenanceResolvers, localisationResolvers]);
 const app = express();
 const start = async () => {
   const server = new ApolloServer({ typeDefs, resolvers });

@@ -40,13 +40,15 @@ const typeDefs = gql`
     statut: StatutConducteur
   }
   extend type Query {
-    conducteurs: [Conducteur!]!
+    conducteurs(statut: StatutConducteur): [Conducteur!]!
     conducteur(id: ID!): Conducteur
   }
   extend type Mutation {
     createConducteur(input: CreateConducteurInput!): Conducteur!
     updateConducteur(id: ID!, input: UpdateConducteurInput!): Conducteur!
     deleteConducteur(id: ID!): Boolean!
+    assignerMission(id: ID!, vehiculeId: ID!, missionId: String!): Boolean!
+    terminerMission(id: ID!, vehiculeId: ID!, missionId: String!): Boolean!
   }
 `;
 module.exports = typeDefs;

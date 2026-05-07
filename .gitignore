@@ -8,3 +8,4 @@ coverage/
 *.log
 .DS_Store
 infra/k8s/secrets/
+COMPACT.md
