@@ -9,6 +9,7 @@ const typeDefs = gql`
   extend type Query {
     historiquePositions(vehiculeId: ID!, debut: String, fin: String): [Position!]!
     dernierePosition(vehiculeId: ID!): Position
+    toutesDernieresPositions: [Position!]!
   }
 `;
 module.exports = typeDefs;

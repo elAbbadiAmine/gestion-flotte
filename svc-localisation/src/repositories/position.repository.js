@@ -64,4 +64,13 @@ const checkGeofencing = async (latitude, longitude) => {
   return violations;
 };
 
-module.exports = { save, findByVehicule, findDernierePosition, findInRadius, checkGeofencing };
+const findToutesDernieresPositions = async () => {
+  const result = await pool.query(
+    `SELECT DISTINCT ON (vehicule_id) time, vehicule_id, latitude, longitude
+     FROM positions
+     ORDER BY vehicule_id, time DESC`
+  );
+  return result.rows;
+};
+
+module.exports = { save, findByVehicule, findDernierePosition, findToutesDernieresPositions, findInRadius, checkGeofencing };

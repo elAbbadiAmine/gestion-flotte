@@ -20,4 +20,9 @@ const getDernierePosition = async (vehiculeId) => {
   }
 };
 
-module.exports = { getHistorique, getDernierePosition };
+const getToutesDernieresPositions = async () => {
+  const res = await axios.get(`${BASE_URL}/api/v1/positions/dernieres`);
+  return res.data.data.map((p) => ({ ...p, vehiculeId: p.vehicule_id }));
+};
+
+module.exports = { getHistorique, getDernierePosition, getToutesDernieresPositions };

@@ -31,4 +31,7 @@ const getDernierePosition = async (vehicule_id) =>
 const getVehiculesDansRayon = async (latitude, longitude, rayonMetres) =>
   repo.findInRadius(latitude, longitude, rayonMetres);
 
-module.exports = { enregistrerPosition, getHistorique, getDernierePosition, getVehiculesDansRayon };
+const getToutesDernieresPositions = async () =>
+  repo.findToutesDernieresPositions();
+
+module.exports = { enregistrerPosition, getHistorique, getDernierePosition, getToutesDernieresPositions, getVehiculesDansRayon };
