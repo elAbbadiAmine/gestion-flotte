@@ -1,0 +1,247 @@
+openapi: 3.0.3
+info:
+  title: svc-conducteurs API
+  description: Service de gestion des conducteurs et des missions
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3002
+    description: Local dev
+  - url: http://svc-conducteurs:3002
+    description: Kubernetes interne
+
+tags:
+  - name: Conducteurs
+    description: CRUD conducteurs
+  - name: Missions
+    description: Gestion du cycle de vie des missions
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Conducteur:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        nom:
+          type: string
+          example: Dupont
+        prenom:
+          type: string
+          example: Jean
+        email:
+          type: string
+          format: email
+          example: jean.dupont@flotte.fr
+        permis:
+          type: string
+          enum: [A, B, C, D, BE, CE]
+          example: B
+        statut:
+          type: string
+          enum: [disponible, en_mission, indisponible]
+          example: disponible
+        vehicule_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    ConducteurInput:
+      type: object
+      required: [nom, prenom, email, permis, statut]
+      properties:
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+          format: email
+        permis:
+          type: string
+          enum: [A, B, C, D, BE, CE]
+        statut:
+          type: string
+          enum: [disponible, en_mission, indisponible]
+
+    AssignerMissionInput:
+      type: object
+      required: [vehicule_id]
+      properties:
+        vehicule_id:
+          type: string
+          format: uuid
+        destination:
+          type: string
+          example: Lyon
+        date_debut:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /conducteurs:
+    get:
+      tags: [Conducteurs]
+      summary: Liste tous les conducteurs
+      responses:
+        '200':
+          description: Liste des conducteurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Conducteur'
+
+    post:
+      tags: [Conducteurs]
+      summary: Crée un conducteur
+      description: Rôles requis — admin, manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConducteurInput'
+      responses:
+        '201':
+          description: Conducteur créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conducteur'
+
+  /conducteurs/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Conducteurs]
+      summary: Retourne un conducteur par UUID
+      responses:
+        '200':
+          description: Conducteur trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conducteur'
+        '404':
+          description: Conducteur non trouvé
+
+    put:
+      tags: [Conducteurs]
+      summary: Met à jour un conducteur
+      description: Rôles requis — admin, manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConducteurInput'
+      responses:
+        '200':
+          description: Conducteur mis à jour
+
+    delete:
+      tags: [Conducteurs]
+      summary: Supprime un conducteur
+      description: Rôles requis — admin
+      responses:
+        '200':
+          description: Supprimé
+
+  /conducteurs/{id}/assigner-mission:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Missions]
+      summary: Assigne un véhicule à ce conducteur
+      description: Rôles requis — admin, manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignerMissionInput'
+      responses:
+        '200':
+          description: Mission assignée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conducteur'
+        '409':
+          description: Conducteur déjà en mission
+
+  /conducteurs/{id}/terminer-mission:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Missions]
+      summary: Termine la mission en cours
+      description: Rôles requis — admin, manager, technicien
+      responses:
+        '200':
+          description: Mission terminée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conducteur'
+
+  /conducteurs/{id}/echouer-mission:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Missions]
+      summary: Marque la mission comme échouée (incident)
+      description: Rôles requis — admin, manager
+      responses:
+        '200':
+          description: Mission marquée échouée

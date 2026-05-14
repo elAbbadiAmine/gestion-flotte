@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: svc-vehicules API
+  description: Service de gestion du parc automobile — CRUD véhicules + événements Kafka
+  version: 1.0.0
+  contact:
+    name: Équipe M1 GIL — Université de Rouen
+
+servers:
+  - url: http://localhost:3001
+    description: Local dev
+  - url: http://svc-vehicules:3001
+    description: Kubernetes interne (cluster)
+
+tags:
+  - name: Véhicules
+    description: Opérations CRUD sur les véhicules
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Vehicule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        immatriculation:
+          type: string
+          example: AB-123-CD
+        marque:
+          type: string
+          example: Renault
+        modele:
+          type: string
+          example: Clio
+        annee:
+          type: integer
+          example: 2022
+        statut:
+          type: string
+          enum: [disponible, en_mission, en_maintenance, hors_service]
+          example: disponible
+        kilometrage:
+          type: number
+          example: 15000
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    VehiculeInput:
+      type: object
+      required: [immatriculation, marque, modele, annee, statut]
+      properties:
+        immatriculation:
+          type: string
+          example: AB-123-CD
+        marque:
+          type: string
+          example: Renault
+        modele:
+          type: string
+          example: Clio
+        annee:
+          type: integer
+          minimum: 1990
+          maximum: 2030
+          example: 2022
+        statut:
+          type: string
+          enum: [disponible, en_mission, en_maintenance, hors_service]
+        kilometrage:
+          type: number
+          default: 0
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: Véhicule non trouvé
+
+security:
+  - bearerAuth: []
+
+paths:
+  /vehicules:
+    get:
+      tags: [Véhicules]
+      summary: Liste tous les véhicules
+      responses:
+        '200':
+          description: Liste des véhicules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicule'
+        '401':
+          description: Token manquant ou invalide
+
+    post:
+      tags: [Véhicules]
+      summary: Crée un véhicule
+      description: Rôles requis — admin, manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehiculeInput'
+      responses:
+        '201':
+          description: Véhicule créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicule'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token manquant ou invalide
+        '403':
+          description: Rôle insuffisant
+
+  /vehicules/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Véhicules]
+      summary: Retourne un véhicule par UUID
+      responses:
+        '200':
+          description: Véhicule trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicule'
+        '404':
+          description: Véhicule non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Véhicules]
+      summary: Met à jour un véhicule
+      description: Rôles requis — admin, manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehiculeInput'
+      responses:
+        '200':
+          description: Véhicule mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicule'
+        '404':
+          description: Véhicule non trouvé
+
+    delete:
+      tags: [Véhicules]
+      summary: Supprime un véhicule
+      description: Rôles requis — admin
+      responses:
+        '200':
+          description: Véhicule supprimé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Véhicule non trouvé
