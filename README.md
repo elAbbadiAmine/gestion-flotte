@@ -4,14 +4,24 @@ Projet M1 Génie Informatique et Logiciel, Université de Rouen, 2025-2026.
 
 Application de gestion de flotte de véhicules en microservices. On peut gérer des véhicules, des conducteurs, planifier des maintenances, suivre la position GPS en temps réel et recevoir des alertes automatiques.
 
-## Services
+## Architecture
 
-- **api-gateway** (port 4000) : point d'entrée GraphQL, agrège tous les services
-- **svc-vehicules** (port 3001) : CRUD véhicules
-- **svc-conducteurs** (port 3002) : CRUD conducteurs + gestion des missions
-- **svc-maintenance** (port 3003) : planification et suivi des interventions
-- **svc-localisation** (port 3004 / gRPC 50051) : tracking GPS, stockage TimescaleDB
-- **svc-evenements** (port 3005) : consumer Kafka, génère des alertes automatiques
+```
+Frontend React
+     │
+     ▼
+API Gateway (GraphQL, port 4000)
+     │
+     ├── svc-vehicules   (port 3001) — PostgreSQL
+     ├── svc-conducteurs (port 3002) — PostgreSQL
+     ├── svc-maintenance (port 3003) — PostgreSQL
+     ├── svc-localisation(port 3004) — TimescaleDB + PostGIS
+     │         └── gRPC (port 50051) ← simulateur GPS
+     └── svc-evenements  (port 3005) — PostgreSQL
+                 ▲
+                 │ consomme
+              Kafka (topics: vehicules, maintenance, localisation)
+```
 
 ## Stack
 
@@ -76,6 +86,26 @@ k6 run tests/k6/run-all.js
 kubectl port-forward -n flotte-dev svc/svc-localisation 50051:50051
 cd svc-localisation/simulateur && node simulateur.js
 ```
+
+## Livrables
+
+**Code source**
+Tous les microservices sont dans ce repo Git. Chaque service a son propre dossier avec son `package.json`, ses tests et son `Dockerfile`.
+
+**Dockerfiles**
+Multi-stage builds, utilisateur non-root. Une image par service.
+
+**Manifests Kubernetes**
+Deployments, Services, ConfigMaps, Secrets, Ingress dans `infra/k8s/`. Helm utilisé pour l'infra (PostgreSQL, Kafka, Keycloak, Redis).
+
+**Configuration Keycloak**
+Realm `flotte` avec les rôles `admin`, `manager`, `technicien`, `utilisateur`. Config dans `infra/keycloak/`.
+
+**OpenTelemetry**
+Instrumentation de chaque service (traces, métriques). Collector configuré dans `infra/helm-values/`. Dashboards Grafana disponibles pour la latence, le nombre de requêtes et les métriques métier.
+
+**Tests**
+78 tests unitaires et d'intégration (Jest + Supertest), tests E2E frontend (Playwright), tests E2E backend saga, tests de charge (k6 avec 3 profils d'utilisateurs).
 
 ## Auteur
 
