@@ -11,7 +11,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/src         ./src
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
 USER nodejs
-EXPOSE 3003
+EXPOSE 3005
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
-  CMD node -e "require('http').get('http://localhost:3003/health', r => process.exit(r.statusCode === 200 ? 0 : 1))"
+  CMD node -e "require('http').get('http://localhost:3005/health', r => process.exit(r.statusCode === 200 ? 0 : 1))"
 CMD ["node", "src/app.js"]

@@ -12,13 +12,15 @@ const vehiculeTypeDefs = require('./schema/vehicule.schema');
 const conducteurTypeDefs = require('./schema/conducteur.schema');
 const maintenanceTypeDefs = require('./schema/maintenance.schema');
 const localisationTypeDefs = require('./schema/localisation.schema');
+const evenementTypeDefs = require('./schema/evenement.schema');
 const vehiculeResolvers = require('./resolvers/vehicule.resolvers');
 const conducteurResolvers = require('./resolvers/conducteur.resolvers');
 const maintenanceResolvers = require('./resolvers/maintenance.resolvers');
 const localisationResolvers = require('./resolvers/localisation.resolvers');
+const evenementResolvers = require('./resolvers/evenement.resolvers');
 
-const typeDefs = mergeTypeDefs([vehiculeTypeDefs, conducteurTypeDefs, maintenanceTypeDefs, localisationTypeDefs]);
-const resolvers = mergeResolvers([vehiculeResolvers, conducteurResolvers, maintenanceResolvers, localisationResolvers]);
+const typeDefs = mergeTypeDefs([vehiculeTypeDefs, conducteurTypeDefs, maintenanceTypeDefs, localisationTypeDefs, evenementTypeDefs]);
+const resolvers = mergeResolvers([vehiculeResolvers, conducteurResolvers, maintenanceResolvers, localisationResolvers, evenementResolvers]);
 
 const app = express();
 
