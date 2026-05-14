@@ -15,34 +15,29 @@ test.describe('Page Maintenance — technicien', () => {
   })
 
   test('planifier une intervention', async ({ page }) => {
-    // Récupérer l'ID d'un vrai véhicule depuis la page Véhicules d'abord
-    // Pour le test on suppose qu'un véhicule existe en base
     await page.click('button:has-text("+ Planifier")')
     await expect(page.locator('h3')).toContainText('Planifier une intervention')
 
-    // On a besoin d'un UUID véhicule valide — on le lit depuis la page véhicules
-    const newPage = page
-    await newPage.goto('/')
-    await newPage.click('a:has-text("Véhicules")')
-    await newPage.waitForSelector('tbody tr')
-    // L'ID complet est en tooltip/données mais l'ID tronqué est en cellule
-    // Pour le test on utilise un UUID connu — adapter selon les données de seed
-    await newPage.click('a:has-text("Maintenance")')
-    await newPage.waitForSelector('h2')
-    await newPage.click('button:has-text("+ Planifier")')
+    // Vérifier que le select des véhicules est présent
+    const selectVehicule = page.locator('select').first()
+    await expect(selectVehicule).toBeVisible()
 
+    // Sélectionner le premier vrai véhicule disponible (si aucun, le test passe silencieusement)
+    const options = await selectVehicule.locator('option').all()
+    if (options.length <= 1) {
+      // Pas de véhicules en base — on ferme le modal et on skip
+      await page.click('button:has-text("Annuler")')
+      test.skip(true, 'Aucun véhicule en base')
+    }
+
+    await selectVehicule.selectOption({ index: 1 })
+    await page.locator('select').nth(1).selectOption('revision')
     const today = new Date().toISOString().slice(0, 10)
-    await newPage.fill('input[placeholder="UUID du véhicule"]', '00000000-0000-0000-0000-000000000001')
-    await newPage.selectOption('select', 'revision')
-    await newPage.fill('input[type="date"]', today)
-    await newPage.fill('input[type="text"]:near(label:has-text("Technicien"))', 'Jean Dupont')
-    await newPage.click('button[type="submit"]')
+    await page.fill('input[type="date"]', today)
+    await page.fill('input[type="text"]:near(label:has-text("Technicien"))', 'Jean Dupont')
+    await page.click('button[type="submit"]')
 
-    // Si le vehiculeId n'existe pas en base le serveur renverra une erreur GraphQL
-    // — le test vérifie au moins que le formulaire s'est soumis sans crash JS
-    await expect(newPage.locator('h3')).not.toBeVisible({ timeout: 5000 }).catch(() => {
-      // Acceptable si vehiculeId invalide → erreur affichée mais pas de crash
-    })
+    await expect(page.locator('h3')).not.toBeVisible({ timeout: 5000 })
   })
 
   test('modifier le statut d\'une intervention existante', async ({ page }) => {

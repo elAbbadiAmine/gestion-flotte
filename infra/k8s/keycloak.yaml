@@ -38,6 +38,8 @@ spec:
               key: DB_PASSWORD
         - name: JAVA_OPTS_APPEND
           value: "-Xms256m -Xmx512m"
+        - name: KC_SPI_THEME_DEFAULTS_LOGIN_THEME
+          value: "flotte"
         ports:
         - containerPort: 8080
         resources:
@@ -47,6 +49,17 @@ spec:
           requests:
             memory: 512Mi
             cpu: "250m"
+        volumeMounts:
+        - name: keycloak-theme
+          mountPath: /opt/keycloak/themes/flotte/login/theme.properties
+          subPath: theme.properties
+        - name: keycloak-theme
+          mountPath: /opt/keycloak/themes/flotte/login/resources/css/login.css
+          subPath: login.css
+      volumes:
+      - name: keycloak-theme
+        configMap:
+          name: keycloak-theme-flotte
 ---
 apiVersion: v1
 kind: Service

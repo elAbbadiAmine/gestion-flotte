@@ -19,10 +19,14 @@ const start = async () => {
   await sequelize.sync({ alter: true });
   logger.info('PostgreSQL Vehicules connecté');
   await connectProducer();
-  await connectConsumer();
   app.listen(PORT, () => logger.info({ port: PORT }, 'svc-vehicules démarré'));
+  // Kafka consumer en background : ne bloque pas le démarrage HTTP
+  connectConsumer().catch((err) => logger.error({ err }, 'Kafka consumer non disponible au démarrage'));
 };
 
-start().catch((err) => logger.error({ err }, 'Erreur au démarrage de svc-vehicules'));
+start().catch((err) => {
+  logger.error({ err }, 'Erreur au démarrage de svc-vehicules');
+  process.exit(1);
+});
 
 module.exports = app;

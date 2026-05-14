@@ -1,47 +1,37 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
 import keycloak from './keycloak.js'
+import { label } from './utils/labels'
 import { VehiculesPage } from './pages/VehiculesPage'
 import { ConducteursPage } from './pages/ConducteursPage'
 import { CartePage } from './pages/CartePage'
 import { MaintenancePage } from './pages/MaintenancePage'
 
-const navStyle = ({ isActive }) => ({
-  padding: '8px 16px',
-  textDecoration: 'none',
-  color: isActive ? 'white' : '#333',
-  background: isActive ? '#2563eb' : 'transparent',
-  borderRadius: 4,
-})
+const ROLES = ['admin', 'manager', 'technicien', 'utilisateur']
+
+const navClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`
 
 function App() {
+  const username = keycloak.tokenParsed?.preferred_username ?? ''
+  const role = keycloak.tokenParsed?.realm_access?.roles?.find(r => ROLES.includes(r)) ?? 'utilisateur'
+
   return (
     <BrowserRouter>
-      <div style={{ fontFamily: 'sans-serif' }}>
-        <header style={{
-          padding: 16,
-          borderBottom: '1px solid #ddd',
-          display: 'flex',
-          gap: 8,
-          alignItems: 'center',
-        }}>
-          <h1 style={{ marginRight: 'auto' }}>Gestion de flotte</h1>
-          <NavLink to="/" end style={navStyle}>Véhicules</NavLink>
-          <NavLink to="/conducteurs" style={navStyle}>Conducteurs</NavLink>
-          <NavLink to="/maintenance" style={navStyle}>Maintenance</NavLink>
-          <NavLink to="/carte" style={navStyle}>Carte</NavLink>
-          <span style={{ marginLeft: 16, color: '#555', fontSize: 14 }}>
-            {keycloak.tokenParsed?.preferred_username}
-            {' · '}
-            {keycloak.tokenParsed?.realm_access?.roles?.find(r =>
-              ['admin', 'manager', 'technicien', 'utilisateur'].includes(r)
-            ) ?? 'utilisateur'}
+      <div>
+        <header className="app-header">
+          <h1 className="app-logo">Gestion de <span>flotte</span></h1>
+          <NavLink to="/" end className={navClass}>Véhicules</NavLink>
+          <NavLink to="/conducteurs" className={navClass}>Conducteurs</NavLink>
+          <NavLink to="/maintenance" className={navClass}>Maintenance</NavLink>
+          <NavLink to="/carte" className={navClass}>Carte</NavLink>
+          <span className="header-user">
+            {username.toLowerCase() !== role ? `${username} · ` : ''}{label(role)}
           </span>
-          <button onClick={() => keycloak.logout()} style={{ marginLeft: 8 }}>
+          <button className="btn-logout" onClick={() => keycloak.logout({ redirectUri: 'http://localhost:5173' })}>
             Déconnexion
           </button>
         </header>
 
-        <main style={{ padding: 20 }}>
+        <main className="app-main">
           <Routes>
             <Route path="/" element={<VehiculesPage />} />
             <Route path="/conducteurs" element={<ConducteursPage />} />

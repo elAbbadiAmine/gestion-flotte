@@ -35,10 +35,10 @@ test.describe('Page Véhicules — admin', () => {
     // Vérifier qu'il apparaît dans la liste
     await expect(page.locator(`td:has-text("${immat}")`)).toBeVisible()
 
-    // Suppression — écouter le dialog AVANT le clic (window.confirm est synchrone)
+    // Suppression — clic puis confirmation dans la popup custom
     const row = page.locator('tr', { has: page.locator(`td:has-text("${immat}")`) })
-    page.once('dialog', dialog => dialog.accept())
     await row.locator('button:has-text("Supprimer")').click()
+    await page.locator('button:has-text("Confirmer")').click()
     await expect(page.locator(`td:has-text("${immat}")`)).not.toBeVisible()
   })
 
