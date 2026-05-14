@@ -22,6 +22,11 @@ jest.mock('../../src/config/kafka', () => ({
   publishEvent: jest.fn().mockResolvedValue(),
 }));
 jest.mock('../../src/repositories/vehicule.repository');
+jest.mock('../../src/config/metrics', () => ({
+  vehiculesCreesTotal: { inc: jest.fn() },
+  vehiculesSupprTotal: { inc: jest.fn() },
+  vehiculesErrTotal: { inc: jest.fn() },
+}));
 
 const service = require('../../src/services/vehicule.service');
 const repo = require('../../src/repositories/vehicule.repository');

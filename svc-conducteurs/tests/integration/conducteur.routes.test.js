@@ -26,6 +26,12 @@ jest.mock('../../src/middleware/auth.middleware', () => ({
   authenticate: (req, res, next) => next(),
   authorize: () => (req, res, next) => next(),
 }));
+jest.mock('../../src/config/metrics', () => ({
+  register: { metrics: jest.fn().mockResolvedValue(''), contentType: 'text/plain' },
+  conducteursCreesTotal: { inc: jest.fn() },
+  conducteursSupprTotal: { inc: jest.fn() },
+  conducteursErrTotal: { inc: jest.fn() },
+}));
 
 const routes = require('../../src/routes/conducteur.routes');
 const app = express();

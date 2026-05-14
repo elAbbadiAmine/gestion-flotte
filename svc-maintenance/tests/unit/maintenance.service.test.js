@@ -5,6 +5,16 @@ const kafka = require('../../src/config/kafka');
 jest.mock('../../src/repositories/maintenance.repository');
 jest.mock('../../src/config/kafka');
 jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+jest.mock('../../src/config/database', () => ({
+  define: jest.fn(() => ({ findAll: jest.fn(), findOne: jest.fn(), create: jest.fn(), update: jest.fn(), destroy: jest.fn() })),
+  authenticate: jest.fn(),
+  sync: jest.fn(),
+}));
+jest.mock('../../src/config/metrics', () => ({
+  maintenancesPlanifieesTotal: { inc: jest.fn() },
+  maintenancesTermineesTotal: { inc: jest.fn() },
+  maintenancesErrTotal: { inc: jest.fn() },
+}));
 
 const demain = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 

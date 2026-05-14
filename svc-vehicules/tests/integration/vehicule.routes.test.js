@@ -16,13 +16,23 @@ jest.mock('../../src/config/database', () => ({
   authenticate: jest.fn(),
   sync: jest.fn(),
 }));
-jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+jest.mock('../../src/config/logger', () => ({
+  info: jest.fn(), error: jest.fn(), warn: jest.fn(),
+  child: () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }),
+}));
 jest.mock('../../src/config/tracing', () => ({}));
+jest.mock('pino-http', () => () => (req, res, next) => next());
 jest.mock('../../src/middleware/auth.middleware', () => ({
   authenticate: (req, res, next) => next(),
   authorize: () => (req, res, next) => next(),
 }));
 jest.mock('../../src/services/vehicule.service');
+jest.mock('../../src/config/metrics', () => ({
+  register: { metrics: jest.fn().mockResolvedValue(''), contentType: 'text/plain' },
+  vehiculesCreesTotal: { inc: jest.fn() },
+  vehiculesSupprTotal: { inc: jest.fn() },
+  vehiculesErrTotal: { inc: jest.fn() },
+}));
 
 const request = require('supertest');
 const express = require('express');

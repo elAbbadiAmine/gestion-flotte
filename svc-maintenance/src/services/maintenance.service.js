@@ -3,12 +3,11 @@ const { publishEvent } = require('../config/kafka');
 const logger = require('../config/logger');
 const { maintenancesPlanifieesTotal, maintenancesTermineesTotal } = require('../config/metrics');
 
-const getAllInterventions = (filters) => repo.findAll(filters);
+const getAllMaintenances = (filters) => repo.findAll(filters);
 
-const getInterventionById = async (id) => {const Intervention = require('../models/maintenance.model');
-
+const getMaintenanceById = async (id) => {
   const i = await repo.findById(id);
-  if (!i) throw new Error('Intervention non trouvée');
+  if (!i) throw new Error('Maintenance non trouvée');
   return i;
 };
 
@@ -17,51 +16,51 @@ const getHistoriqueVehicule = (vehiculeId) => repo.findByVehicule(vehiculeId);
 const getAlertes = (kilometrageActuel, marge) =>
   repo.findAlertesKilometrage(Number(kilometrageActuel), marge ? Number(marge) : undefined);
 
-const createIntervention = async (data) => {
+const createMaintenance = async (data) => {
   validerDates(data);
   const i = await repo.create(data);
   maintenancesPlanifieesTotal.inc({ type: i.type });
-  logger.info({ id: i.id, vehiculeId: i.vehiculeId, type: i.type }, 'Intervention créée');
+  logger.info({ id: i.id, vehiculeId: i.vehiculeId, type: i.type }, 'Maintenance créée');
   await publishEvent('maintenance', { type: 'maintenance.planifiee', payload: i });
   return i;
 };
 
-const demarrerIntervention = async (id) => {
+const demarrerMaintenance = async (id) => {
   const i = await repo.findById(id);
-  if (!i) throw new Error('Intervention non trouvée');
+  if (!i) throw new Error('Maintenance non trouvée');
   if (i.statut !== 'planifiee') throw new Error(`Statut invalide : ${i.statut}`);
   const updated = await repo.update(id, { statut: 'en_cours', dateReelle: new Date() });
-  logger.info({ id, vehiculeId: updated.vehiculeId }, 'Intervention démarrée');
-  await publishEvent('maintenance', { type: 'maintenance.started', payload: { vehiculeId: updated.vehiculeId, interventionId: id } });
+  logger.info({ id, vehiculeId: updated.vehiculeId }, 'Maintenance démarrée');
+  await publishEvent('maintenance', { type: 'maintenance.started', payload: { vehiculeId: updated.vehiculeId, maintenanceId: id } });
   return updated;
 };
 
-const terminerIntervention = async (id, data) => {
+const terminerMaintenance = async (id, data) => {
   const i = await repo.findById(id);
-  if (!i) throw new Error('Intervention non trouvée');
+  if (!i) throw new Error('Maintenance non trouvée');
   if (i.statut !== 'en_cours') throw new Error(`Statut invalide : ${i.statut}`);
   const updated = await repo.update(id, { statut: 'terminee', ...data });
   maintenancesTermineesTotal.inc();
-  logger.info({ id, vehiculeId: updated.vehiculeId }, 'Intervention terminée');
-  await publishEvent('maintenance', { type: 'maintenance.completed', payload: { vehiculeId: updated.vehiculeId, interventionId: id } });
+  logger.info({ id, vehiculeId: updated.vehiculeId }, 'Maintenance terminée');
+  await publishEvent('maintenance', { type: 'maintenance.completed', payload: { vehiculeId: updated.vehiculeId, maintenanceId: id } });
   return updated;
 };
 
-const annulerIntervention = async (id, motif) => {
+const annulerMaintenance = async (id, motif) => {
   const i = await repo.findById(id);
-  if (!i) throw new Error('Intervention non trouvée');
-  if (i.statut === 'terminee') throw new Error('Impossible d\'annuler une intervention terminée');
+  if (!i) throw new Error('Maintenance non trouvée');
+  if (i.statut === 'terminee') throw new Error('Impossible d\'annuler une maintenance terminée');
   const updated = await repo.update(id, { statut: 'annulee', description: motif || i.description });
-  logger.info({ id, vehiculeId: updated.vehiculeId }, 'Intervention annulée');
-  await publishEvent('maintenance', { type: 'maintenance.annulee', payload: { vehiculeId: updated.vehiculeId, interventionId: id } });
+  logger.info({ id, vehiculeId: updated.vehiculeId }, 'Maintenance annulée');
+  await publishEvent('maintenance', { type: 'maintenance.annulee', payload: { vehiculeId: updated.vehiculeId, maintenanceId: id } });
   return updated;
 };
 
-const updateIntervention = async (id, data) => {
+const updateMaintenance = async (id, data) => {
   if (data.datePlanifiee) validerDates(data);
   const i = await repo.update(id, data);
-  if (!i) throw new Error('Intervention non trouvée');
-  logger.info({ id }, 'Intervention mise à jour');
+  if (!i) throw new Error('Maintenance non trouvée');
+  logger.info({ id }, 'Maintenance mise à jour');
   return i;
 };
 
@@ -74,13 +73,13 @@ const validerDates = (data) => {
 };
 
 module.exports = {
-  getAllInterventions,
-  getInterventionById,
+  getAllMaintenances,
+  getMaintenanceById,
   getHistoriqueVehicule,
   getAlertes,
-  createIntervention,
-  demarrerIntervention,
-  terminerIntervention,
-  annulerIntervention,
-  updateIntervention,
+  createMaintenance,
+  demarrerMaintenance,
+  terminerMaintenance,
+  annulerMaintenance,
+  updateMaintenance,
 };

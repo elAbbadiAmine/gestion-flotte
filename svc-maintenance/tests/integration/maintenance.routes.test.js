@@ -4,10 +4,24 @@ const service = require('../../src/services/maintenance.service');
 
 jest.mock('../../src/services/maintenance.service');
 jest.mock('../../src/config/kafka');
-jest.mock('../../src/config/logger', () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }));
+jest.mock('../../src/config/logger', () => ({
+  info: jest.fn(), error: jest.fn(), warn: jest.fn(),
+  child: () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }),
+}));
 jest.mock('../../src/config/database', () => ({ authenticate: jest.fn(), sync: jest.fn(), define: jest.fn(() => ({})) }));
 jest.mock('../../src/config/kafkaConsumer', () => ({ connectConsumer: jest.fn() }));
 jest.mock('../../src/config/tracing', () => ({ startTracing: jest.fn() }));
+jest.mock('pino-http', () => () => (req, res, next) => next());
+jest.mock('../../src/middleware/auth.middleware', () => ({
+  authenticate: (req, res, next) => next(),
+  authorize: () => (req, res, next) => next(),
+}));
+jest.mock('../../src/config/metrics', () => ({
+  register: { metrics: jest.fn().mockResolvedValue(''), contentType: 'text/plain' },
+  maintenancesPlanifieesTotal: { inc: jest.fn() },
+  maintenancesTermineesTotal: { inc: jest.fn() },
+  maintenancesErrTotal: { inc: jest.fn() },
+}));
 
 const demain = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
