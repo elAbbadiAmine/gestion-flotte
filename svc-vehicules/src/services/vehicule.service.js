@@ -1,6 +1,7 @@
 const repo = require('../repositories/vehicule.repository');
 const { publishEvent } = require('../config/kafka');
 const logger = require('../config/logger');
+const { vehiculesCreesTotal, vehiculesSupprTotal } = require('../config/metrics');
 
 const getAllVehicules = (filters) => repo.findAll(filters);
 
@@ -12,6 +13,7 @@ const getVehiculeById = async (id) => {
 
 const createVehicule = async (data) => {
   const vehicule = await repo.create(data);
+  vehiculesCreesTotal.inc();
   logger.info({ id: vehicule.id, immatriculation: vehicule.immatriculation }, 'Véhicule créé');
   await publishEvent('vehicules', { type: 'vehicule.created', payload: vehicule });
   return vehicule;
@@ -28,6 +30,7 @@ const updateVehicule = async (id, data) => {
 const deleteVehicule = async (id) => {
   const count = await repo.remove(id);
   if (!count) throw new Error('Véhicule non trouvé');
+  vehiculesSupprTotal.inc();
   logger.info({ id }, 'Véhicule supprimé');
   await publishEvent('vehicules', { type: 'vehicule.deleted', payload: { id } });
 };

@@ -1,0 +1,42 @@
+config:
+  logLevel: info
+  serverPort: 3101
+
+  clients:
+    - url: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push
+
+  snippets:
+    pipelineStages:
+      # Décode le format CRI (containerd / Minikube)
+      # Ligne brute : "2024-01-01T00:00:00Z stdout F <message>"
+      - cri: {}
+
+      # Tente de parser le JSON pino — silencieux si le log n'est pas JSON
+      # (Kafka, Keycloak, etc. ne sont pas JSON : pas de labels ajoutés)
+      - json:
+          expressions:
+            level:   level
+            service: service
+            msg:     msg
+
+      # Promeut les champs extraits en labels Loki
+      - labels:
+          level:
+          service:
+
+resources:
+  limits:
+    memory: 128Mi
+    cpu: "200m"
+  requests:
+    memory: 64Mi
+    cpu: "100m"
+
+# Tolère le nœud control-plane de Minikube (single-node)
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule

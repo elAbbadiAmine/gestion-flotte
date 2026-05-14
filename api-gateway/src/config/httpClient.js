@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { getServiceToken } = require('./auth');
+const logger = require('./logger');
 
 const instance = axios.create();
 
@@ -8,7 +9,7 @@ instance.interceptors.request.use(async (config) => {
     const token = await getServiceToken();
     config.headers.Authorization = `Bearer ${token}`;
   } catch (err) {
-    console.error('Erreur récupération token:', err.message);
+    logger.error({ err: err.message }, 'Erreur récupération token service');
   }
   return config;
 });

@@ -12,6 +12,10 @@ spec:
     metadata:
       labels:
         app: svc-localisation
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3004"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
       - name: svc-localisation
@@ -19,9 +23,14 @@ spec:
         imagePullPolicy: Never
         ports:
         - containerPort: 3004
+        - containerPort: 50051
         env:
         - name: PORT
           value: "3004"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://otel-collector-opentelemetry-collector:4317"
+        - name: OTEL_SERVICE_NAME
+          value: "svc-localisation"
         resources:
           limits:
             memory: 256Mi

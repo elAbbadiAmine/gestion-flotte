@@ -12,6 +12,10 @@ spec:
     metadata:
       labels:
         app: svc-vehicules
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3001"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
         - name: svc-vehicules
@@ -34,6 +38,8 @@ spec:
                   key: KAFKA_BROKER
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector-opentelemetry-collector:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "svc-vehicules"
             - name: KAFKAJS_NO_PARTITIONER_WARNING
               value: "1"
           resources:

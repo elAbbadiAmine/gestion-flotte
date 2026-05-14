@@ -2,6 +2,7 @@ const express = require('express');
 const { json } = require('express');
 const pino = require('pino-http');
 const logger = require('./config/logger');
+const { register } = require('./config/metrics');
 const sequelize = require('./config/database');
 const { connectProducer } = require('./config/kafka');
 const { connectConsumer } = require('./config/kafkaConsumer');
@@ -12,6 +13,11 @@ const app = express();
 app.use(json());
 app.use(pino({ logger }));
 app.use('/api/v1/maintenances', router);
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'svc-maintenance' }));
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.send(await register.metrics());
+});
 
 app.use((err, req, res, next) => {
   logger.error({ err }, 'Erreur non gérée');

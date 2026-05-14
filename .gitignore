@@ -7,7 +7,14 @@ dist/
 coverage/
 *.log
 .DS_Store
+
+# resultats tests Playwright
+frontend/test-results/
+
+# secrets K8s (ne jamais committer)
 infra/k8s/secrets/
+
+# fichiers Claude Code
 COMPACT.md
 CLAUDE.md
 .claude/

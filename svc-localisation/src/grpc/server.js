@@ -3,6 +3,7 @@ const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const service = require('../services/localisation.service');
 const logger = require('../config/logger');
+const { positionsGpsTotal } = require('../config/metrics');
 
 const PROTO_PATH = path.join(__dirname, '../../proto/localisation.proto');
 
@@ -25,6 +26,7 @@ const envoyerPosition = (call, callback) => {
       longitude: req.longitude,
       time: req.time ? new Date(req.time) : new Date(),
     }).then((position) => {
+      positionsGpsTotal.inc();
       logger.info({ vehicule_id: req.vehicule_id }, 'Position enregistrée');
       return position;
     }).catch((err) => {

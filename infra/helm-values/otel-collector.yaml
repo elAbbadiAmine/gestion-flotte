@@ -13,7 +13,8 @@ config:
     batch: {}
   exporters:
     otlp:
-      endpoint: jaeger-collector:4317
+      # Jaeger all-in-one dans namespace monitoring
+      endpoint: jaeger-collector.monitoring.svc.cluster.local:4317
       tls:
         insecure: true
     prometheus:

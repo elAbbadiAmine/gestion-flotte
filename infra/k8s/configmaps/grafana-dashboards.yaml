@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-flotte
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  flotte-observabilite.json: |
+    {
+      "title": "Gestion Flotte — Observabilité",
+      "uid": "flotte-observabilite",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" },
+      "timezone": "browser",
+      "tags": ["flotte"],
+      "panels": [
+
+        { "id": 1, "type": "text", "title": "",
+          "gridPos": { "x": 0, "y": 0, "w": 24, "h": 2 },
+          "options": { "mode": "markdown", "content": "## Métriques métier" } },
+
+        { "id": 2, "type": "stat", "title": "Véhicules créés",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 2, "w": 6, "h": 4 },
+          "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } } },
+          "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(vehicules_crees_total)", "legendFormat": "" }] },
+
+        { "id": 3, "type": "stat", "title": "Conducteurs créés",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 6, "y": 2, "w": 6, "h": 4 },
+          "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } } },
+          "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(conducteurs_crees_total)", "legendFormat": "" }] },
+
+        { "id": 4, "type": "stat", "title": "Maintenances planifiées",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 12, "y": 2, "w": 6, "h": 4 },
+          "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "orange", "value": null }] } } },
+          "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(maintenances_planifiees_total)", "legendFormat": "" }] },
+
+        { "id": 5, "type": "stat", "title": "Positions GPS reçues",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 18, "y": 2, "w": 6, "h": 4 },
+          "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "purple", "value": null }] } } },
+          "targets": [{ "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(positions_gps_recues_total)", "legendFormat": "" }] },
+
+        { "id": 6, "type": "timeseries", "title": "Taux d'activité métier (par minute)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 6, "w": 24, "h": 7 },
+          "fieldConfig": { "defaults": { "custom": { "lineWidth": 2 } } },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "rate(vehicules_crees_total[1m]) * 60", "legendFormat": "Véhicules créés/min" },
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "rate(conducteurs_crees_total[1m]) * 60", "legendFormat": "Conducteurs créés/min" },
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "rate(maintenances_planifiees_total[1m]) * 60", "legendFormat": "Maintenances/min" },
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "rate(positions_gps_recues_total[1m]) * 60", "legendFormat": "Positions GPS/min" }
+          ] },
+
+        { "id": 7, "type": "text", "title": "",
+          "gridPos": { "x": 0, "y": 13, "w": 24, "h": 2 },
+          "options": { "mode": "markdown", "content": "## Runtime Node.js" } },
+
+        { "id": 8, "type": "timeseries", "title": "Heap utilisé par service (MB)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 0, "y": 15, "w": 12, "h": 7 },
+          "fieldConfig": { "defaults": { "unit": "decmbytes", "custom": { "lineWidth": 2 } } },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "nodejs_heap_size_used_bytes{service=~\".+\"} / 1024 / 1024", "legendFormat": "{{service}}" }
+          ] },
+
+        { "id": 9, "type": "timeseries", "title": "Event loop lag (ms)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "x": 12, "y": 15, "w": 12, "h": 7 },
+          "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } } },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "nodejs_eventloop_lag_seconds{service=~\".+\"} * 1000", "legendFormat": "{{service}}" }
+          ] },
+
+        { "id": 10, "type": "text", "title": "",
+          "gridPos": { "x": 0, "y": 22, "w": 24, "h": 2 },
+          "options": { "mode": "markdown", "content": "## Logs en temps réel (Loki)" } },
+
+        { "id": 11, "type": "logs", "title": "Logs — tous services flotte-dev",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "x": 0, "y": 24, "w": 24, "h": 10 },
+          "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": false },
+          "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{namespace=\"flotte-dev\"}", "legendFormat": "" }] },
+
+        { "id": 12, "type": "logs", "title": "Erreurs uniquement",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "x": 0, "y": 34, "w": 24, "h": 6 },
+          "options": { "dedupStrategy": "none", "enableLogDetails": true, "sortOrder": "Descending", "showLabels": true, "showTime": true },
+          "targets": [{ "datasource": { "type": "loki", "uid": "loki" }, "expr": "{namespace=\"flotte-dev\", level=\"error\"}", "legendFormat": "" }] }
+
+      ]
+    }

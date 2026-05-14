@@ -1,6 +1,7 @@
 const repo = require('../repositories/conducteur.repository');
 const { publishEvent } = require('../config/kafka');
 const logger = require('../config/logger');
+const { conducteursCreesTotal, conducteursSupprTotal } = require('../config/metrics');
 
 const getAllConducteurs = (filters) => repo.findAll(filters);
 
@@ -13,6 +14,7 @@ const getConducteurById = async (id) => {
 const createConducteur = async (data) => {
   validerPermis(data);
   const c = await repo.create(data);
+  conducteursCreesTotal.inc();
   logger.info({ id: c.id, email: c.email }, 'Conducteur créé');
   await publishEvent('conducteurs', { type: 'conducteur.created', payload: c });
   return c;
@@ -30,6 +32,7 @@ const updateConducteur = async (id, data) => {
 const deleteConducteur = async (id) => {
   const count = await repo.remove(id);
   if (!count) throw new Error('Conducteur non trouvé');
+  conducteursSupprTotal.inc();
   logger.info({ id }, 'Conducteur supprimé');
   await publishEvent('conducteurs', { type: 'conducteur.deleted', payload: { id } });
 };

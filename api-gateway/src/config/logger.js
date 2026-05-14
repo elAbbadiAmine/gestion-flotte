@@ -6,7 +6,7 @@ const logger = pino({
     level: (label) => ({ level: label }),
   },
   timestamp: pino.stdTimeFunctions.isoTime,
-  base: { service: 'svc-localisation' },
+  base: { service: 'api-gateway' },
 });
 
 module.exports = logger;

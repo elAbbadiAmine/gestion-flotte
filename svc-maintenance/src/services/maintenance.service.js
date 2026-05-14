@@ -1,6 +1,7 @@
 const repo = require('../repositories/maintenance.repository');
 const { publishEvent } = require('../config/kafka');
 const logger = require('../config/logger');
+const { maintenancesPlanifieesTotal, maintenancesTermineesTotal } = require('../config/metrics');
 
 const getAllInterventions = (filters) => repo.findAll(filters);
 
@@ -19,6 +20,7 @@ const getAlertes = (kilometrageActuel, marge) =>
 const createIntervention = async (data) => {
   validerDates(data);
   const i = await repo.create(data);
+  maintenancesPlanifieesTotal.inc({ type: i.type });
   logger.info({ id: i.id, vehiculeId: i.vehiculeId, type: i.type }, 'Intervention créée');
   await publishEvent('maintenance', { type: 'maintenance.planifiee', payload: i });
   return i;
@@ -39,6 +41,7 @@ const terminerIntervention = async (id, data) => {
   if (!i) throw new Error('Intervention non trouvée');
   if (i.statut !== 'en_cours') throw new Error(`Statut invalide : ${i.statut}`);
   const updated = await repo.update(id, { statut: 'terminee', ...data });
+  maintenancesTermineesTotal.inc();
   logger.info({ id, vehiculeId: updated.vehiculeId }, 'Intervention terminée');
   await publishEvent('maintenance', { type: 'maintenance.completed', payload: { vehiculeId: updated.vehiculeId, interventionId: id } });
   return updated;

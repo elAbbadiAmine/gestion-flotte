@@ -10,6 +10,24 @@ grafana:
     requests:
       memory: 128Mi
       cpu: "100m"
+
+  # Datasource Loki provisionné automatiquement (uid fixe pour le dashboard)
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki.monitoring.svc.cluster.local:3100
+      access: proxy
+      isDefault: false
+
+  # Sidecar : charge les dashboards depuis les ConfigMaps labelisés grafana_dashboard=1
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+
 prometheus:
   prometheusSpec:
     retention: 24h
@@ -20,6 +38,29 @@ prometheus:
       requests:
         memory: 256Mi
         cpu: "250m"
+    # Scraping des pods annotés prometheus.io/scrape=true dans flotte-dev
+    additionalScrapeConfigs:
+      - job_name: 'flotte-services'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: ['flotte-dev']
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            separator: ':'
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: service
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+
 alertmanager:
   enabled: false
 nodeExporter:

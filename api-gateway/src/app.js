@@ -1,9 +1,13 @@
+require('./config/tracing');
 const express = require('express');
+const pinoHttp = require('pino-http');
 const cors = require('cors');
 const { ApolloServer } = require('@apollo/server');
 const { expressMiddleware } = require('@apollo/server/express4');
 const { mergeTypeDefs, mergeResolvers } = require('@graphql-tools/merge');
 const { json } = require('express');
+const logger = require('./config/logger');
+const { register } = require('./config/metrics');
 const vehiculeTypeDefs = require('./schema/vehicule.schema');
 const conducteurTypeDefs = require('./schema/conducteur.schema');
 const maintenanceTypeDefs = require('./schema/maintenance.schema');
@@ -28,17 +32,22 @@ const start = async () => {
   }));
 
   app.use(express.json());
+  app.use(pinoHttp({ logger }));
   app.get('/health', (req, res) => res.json({ status: 'ok', service: 'api-gateway' }));
+  app.get('/metrics', async (req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.send(await register.metrics());
+  });
   app.use('/graphql', json(), expressMiddleware(server, {
     context: async ({ req }) => ({ headers: req.headers }),
   }));
 
   const PORT = process.env.PORT || 4000;
   app.listen(PORT, () => {
-    console.log(`[api-gateway] Port ${PORT}`);
-    console.log(`[GraphQL] http://localhost:${PORT}/graphql`);
+    logger.info({ port: PORT }, 'api-gateway démarré');
+    logger.info(`GraphQL : http://localhost:${PORT}/graphql`);
   });
 };
 
-start().catch(console.error);
+start().catch((err) => logger.error({ err }, 'Erreur au démarrage api-gateway'));
 module.exports = app;
