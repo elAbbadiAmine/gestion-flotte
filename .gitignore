@@ -16,5 +16,3 @@ infra/k8s/secrets/
 
 # outils de developpement local
 COMPACT.md
-CLAUDE.md
-.claude/
