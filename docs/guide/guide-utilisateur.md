@@ -23,10 +23,10 @@ Saisir les identifiants et cliquer sur **Se connecter**.
 
 | Rôle | Identifiant | Mot de passe |
 |------|-------------|--------------|
-| Administrateur | admin | Admin123! |
-| Manager | manager | Manager123! |
-| Technicien | technicien | Technicien123! |
-| Utilisateur | utilisateur | Utilisateur123! |
+| Administrateur | admin | admin |
+| Manager | manager | manager |
+| Technicien | technicien | technicien |
+| Utilisateur | utilisateur | utilisateur |
 
 Après connexion, l'application affiche la page **Véhicules**.
 
