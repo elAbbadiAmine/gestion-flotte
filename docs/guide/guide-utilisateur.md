@@ -17,7 +17,7 @@
 
 Ouvrir `http://flotte.local` dans Chrome. L'application redirige automatiquement vers la page de connexion Keycloak.
 
-![Page de connexion Keycloak](screenshots/02-login-rempli.png)
+![Page de connexion](screenshots/01-login.png)
 
 Saisir les identifiants et cliquer sur **Se connecter**.
 
@@ -34,13 +34,15 @@ Après connexion, l'application affiche la page **Véhicules**.
 
 ## 2. Page Véhicules
 
-**URL :** `http://flotte.local/` (page par défaut)
+**URL :** `http://flotte.local/`
+
+![Page Véhicules](screenshots/03-accueil-vehicules.png)
 
 Affiche la liste complète du parc automobile avec pour chaque véhicule : immatriculation, marque, modèle, année, kilométrage et statut.
 
 **Actions disponibles selon le rôle :**
 
-- **Ajouter un véhicule** (admin, manager) : cliquer sur le bouton en haut à droite, remplir le formulaire (immatriculation, marque, modèle, année, kilométrage) et valider.
+- **Ajouter un véhicule** (admin, manager) : cliquer sur le bouton en haut à droite, remplir le formulaire et valider.
 - **Modifier** (admin, manager) : cliquer sur l'icône de modification sur la ligne du véhicule.
 - **Supprimer** (admin) : cliquer sur l'icône de suppression, confirmer dans la boîte de dialogue.
 
@@ -51,6 +53,8 @@ Affiche la liste complète du parc automobile avec pour chaque véhicule : immat
 ## 3. Page Conducteurs
 
 **URL :** `http://flotte.local/conducteurs`
+
+![Page Conducteurs](screenshots/04-conducteurs.png)
 
 Liste tous les conducteurs avec leurs informations : nom, prénom, email, téléphone, numéro de permis, catégories de permis, date d'expiration et statut.
 
@@ -68,12 +72,14 @@ Liste tous les conducteurs avec leurs informations : nom, prénom, email, télé
 
 **URL :** `http://flotte.local/maintenance`
 
+![Page Maintenance](screenshots/05-maintenance.png)
+
 Gestion des interventions de maintenance planifiées et en cours sur les véhicules.
 
 **Actions disponibles :**
 
 - **Planifier une intervention** (admin, manager, technicien) : sélectionner le véhicule, le type d'intervention (révision, réparation, contrôle technique, pneus, autre), la date prévue, la description et le technicien responsable.
-- **Modifier** : mettre à jour le statut (planifiée → en_cours → terminée), saisir la date réelle, le kilométrage et le coût.
+- **Modifier** : mettre à jour le statut, saisir la date réelle, le kilométrage et le coût.
 - **Annuler** : passer une intervention en statut annulée.
 
 **Cycle de vie d'une intervention :**
@@ -88,6 +94,8 @@ planifiee → en_cours → terminee
 ## 5. Page Alertes
 
 **URL :** `http://flotte.local/alertes`
+
+![Page Alertes](screenshots/06-alertes.png)
 
 Affiche les alertes générées automatiquement par le système Kafka à chaque événement (création véhicule, assignation mission, intervention maintenance, violation géofencing).
 
@@ -104,6 +112,8 @@ Affiche les alertes générées automatiquement par le système Kafka à chaque 
 ## 6. Page Carte GPS
 
 **URL :** `http://flotte.local/carte`
+
+![Page Carte GPS](screenshots/07-carte.png)
 
 Carte interactive (OpenStreetMap via Leaflet) affichant la position en temps réel de chaque véhicule actif.
 
