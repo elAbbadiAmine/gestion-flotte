@@ -14,7 +14,7 @@ frontend/test-results/
 # secrets K8s (ne jamais committer)
 infra/k8s/secrets/
 
-# fichiers Claude Code
+# outils de developpement local
 COMPACT.md
 CLAUDE.md
 .claude/
