@@ -7,7 +7,7 @@ import keycloak from './keycloak.js'
 import './index.css'
 
 keycloak.init({ onLoad: 'login-required', pkceMethod: 'S256', checkLoginIframe: false }).then(() => {
-  const httpLink = createHttpLink({ uri: 'http://localhost:4000/graphql' })
+  const httpLink = createHttpLink({ uri: import.meta.env.VITE_GRAPHQL_URL ?? 'http://localhost:4000/graphql' })
 
   const authLink = setContext(async (_, { headers }) => {
     try { await keycloak.updateToken(30) } catch { keycloak.login() }

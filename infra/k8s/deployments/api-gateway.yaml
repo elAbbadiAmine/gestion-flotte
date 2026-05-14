@@ -14,7 +14,7 @@ spec:
         app: api-gateway
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "3000"
+        prometheus.io/port: "4000"
         prometheus.io/path: "/metrics"
     spec:
       containers:
@@ -22,14 +22,56 @@ spec:
         image: api-gateway:dev
         imagePullPolicy: Never
         ports:
-        - containerPort: 3000
+        - containerPort: 4000
         env:
         - name: PORT
-          value: "3000"
+          value: "4000"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://otel-collector-opentelemetry-collector:4317"
         - name: OTEL_SERVICE_NAME
           value: "api-gateway"
+        - name: SVC_VEHICULES_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SVC_VEHICULES_URL
+        - name: SVC_CONDUCTEURS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SVC_CONDUCTEURS_URL
+        - name: SVC_MAINTENANCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SVC_MAINTENANCE_URL
+        - name: SVC_LOCALISATION_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SVC_LOCALISATION_URL
+        - name: SVC_EVENEMENTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SVC_EVENEMENTS_URL
+        - name: KEYCLOAK_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_URL
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_REALM
+        - name: KEYCLOAK_CLIENT_ID
+          value: "gestion-flotte-api"
+        - name: KEYCLOAK_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_SECRET
         resources:
           limits:
             memory: 256Mi

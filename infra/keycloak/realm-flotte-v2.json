@@ -1005,14 +1005,16 @@
       "frontchannelLogout": false,
       "protocol": "openid-connect",
       "redirectUris": [
-        "http://localhost:5173/*"
+        "http://localhost:5173/*",
+        "http://flotte.local/*"
       ],
       "webOrigins": [
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://flotte.local"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173"
+        "post.logout.redirect.uris": "http://localhost:5173 http://flotte.local"
       },
       "fullScopeAllowed": true,
       "nodeReRegistrationTimeout": 0,

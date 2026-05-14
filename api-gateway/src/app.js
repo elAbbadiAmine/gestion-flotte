@@ -28,8 +28,9 @@ const start = async () => {
   const server = new ApolloServer({ typeDefs, resolvers });
   await server.start();
 
+  const allowedOrigins = ['http://localhost:5173', 'http://flotte.local'];
   app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: (origin, cb) => cb(null, !origin || allowedOrigins.includes(origin)),
     credentials: true,
   }));
 

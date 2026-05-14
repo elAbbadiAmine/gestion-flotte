@@ -42,6 +42,13 @@ spec:
           value: "svc-evenements"
         - name: KAFKAJS_NO_PARTITIONER_WARNING
           value: "1"
+        - name: KEYCLOAK_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KEYCLOAK_URL
+        - name: KEYCLOAK_REALM
+          value: "flotte"
         resources:
           limits:
             memory: 256Mi

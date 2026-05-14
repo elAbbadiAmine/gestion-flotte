@@ -1,24 +1,14 @@
 openapi: 3.0.3
 info:
-  title: svc-maintenance API
-  description: Service de planification et suivi des interventions de maintenance
+  title: svc-maintenance
   version: 1.0.0
 
 servers:
-  - url: http://localhost:3003
-    description: Local dev
   - url: http://svc-maintenance:3003
-    description: Kubernetes interne
-
-tags:
-  - name: Interventions
-    description: Gestion des interventions de maintenance
-  - name: Alertes
-    description: Alertes de maintenance préventive
 
 components:
   securitySchemes:
-    bearerAuth:
+    bearer:
       type: http
       scheme: bearer
       bearerFormat: JWT
@@ -27,244 +17,131 @@ components:
     Maintenance:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        vehicule_id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum: [vidange, revision, pneus, freins, autre]
-          example: vidange
-        description:
-          type: string
-          example: Vidange + filtre à huile
-        statut:
-          type: string
-          enum: [planifiee, en_cours, terminee, annulee]
-          example: planifiee
-        priorite:
-          type: string
-          enum: [basse, normale, haute, urgente]
-          example: normale
-        date_prevue:
-          type: string
-          format: date-time
-        date_debut:
-          type: string
-          format: date-time
-          nullable: true
-        date_fin:
-          type: string
-          format: date-time
-          nullable: true
-        kilometrage_prevu:
-          type: number
-        cout:
-          type: number
-          nullable: true
-        rapport:
-          type: string
-          nullable: true
-
-    MaintenanceInput:
-      type: object
-      required: [vehicule_id, type, date_prevue]
-      properties:
-        vehicule_id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum: [vidange, revision, pneus, freins, autre]
-        description:
-          type: string
-        date_prevue:
-          type: string
-          format: date-time
-        kilometrage_prevu:
-          type: number
-        priorite:
-          type: string
-          enum: [basse, normale, haute, urgente]
-          default: normale
-
-    TerminerInput:
-      type: object
-      properties:
-        rapport:
-          type: string
-        kilometrage_reel:
-          type: number
-        cout:
-          type: number
+        id: { type: string, format: uuid }
+        vehicule_id: { type: string, format: uuid }
+        type: { type: string, enum: [vidange, revision, pneus, freins, autre] }
+        description: { type: string }
+        statut: { type: string, enum: [planifiee, en_cours, terminee, annulee] }
+        priorite: { type: string, enum: [basse, normale, haute, urgente] }
+        date_prevue: { type: string, format: date-time }
+        date_fin: { type: string, format: date-time, nullable: true }
+        cout: { type: number, nullable: true }
 
 security:
-  - bearerAuth: []
+  - bearer: []
 
 paths:
   /maintenance/alertes:
     get:
-      tags: [Alertes]
       summary: Liste les interventions urgentes ou en retard
       responses:
         '200':
-          description: Liste des alertes maintenance
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Maintenance'
+                items: { $ref: '#/components/schemas/Maintenance' }
 
   /maintenance/vehicule/{vehiculeId}:
     parameters:
-      - name: vehiculeId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
+      - { name: vehiculeId, in: path, required: true, schema: { type: string, format: uuid } }
     get:
-      tags: [Interventions]
-      summary: Liste les interventions d'un véhicule
+      summary: Interventions d'un vehicule
       responses:
         '200':
-          description: Interventions du véhicule
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Maintenance'
+                items: { $ref: '#/components/schemas/Maintenance' }
 
   /maintenance:
     get:
-      tags: [Interventions]
       summary: Liste toutes les interventions
       responses:
         '200':
-          description: Toutes les interventions
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Maintenance'
+                items: { $ref: '#/components/schemas/Maintenance' }
 
     post:
-      tags: [Interventions]
-      summary: Planifie une intervention
-      description: Rôles requis — admin, manager, technicien
+      summary: Planifie une intervention (admin, manager, technicien)
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/MaintenanceInput'
+            schema: { $ref: '#/components/schemas/Maintenance' }
       responses:
         '201':
-          description: Intervention planifiée
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Maintenance'
+              schema: { $ref: '#/components/schemas/Maintenance' }
 
   /maintenance/{id}:
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
 
     get:
-      tags: [Interventions]
-      summary: Retourne une intervention par UUID
+      summary: Retourne une intervention
       responses:
         '200':
-          description: Intervention trouvée
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Maintenance'
-        '404':
-          description: Intervention non trouvée
+              schema: { $ref: '#/components/schemas/Maintenance' }
+        '404': { description: Non trouvé }
 
     put:
-      tags: [Interventions]
-      summary: Met à jour une intervention planifiée
-      description: Rôles requis — admin, manager, technicien
+      summary: Met à jour une intervention (admin, manager, technicien)
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/MaintenanceInput'
+            schema: { $ref: '#/components/schemas/Maintenance' }
       responses:
         '200':
-          description: Intervention mise à jour
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Maintenance' }
 
   /maintenance/{id}/demarrer:
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
     post:
-      tags: [Interventions]
-      summary: Démarre une intervention (planifiee → en_cours)
-      description: Rôles requis — admin, technicien
+      summary: Demarre une intervention, statut planifiee -> en_cours (admin, technicien)
       responses:
         '200':
-          description: Intervention démarrée
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Maintenance'
+              schema: { $ref: '#/components/schemas/Maintenance' }
 
   /maintenance/{id}/terminer:
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
     post:
-      tags: [Interventions]
-      summary: Termine une intervention (en_cours → terminee)
-      description: Rôles requis — admin, technicien
+      summary: Termine une intervention, statut en_cours -> terminee (admin, technicien)
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TerminerInput'
+              type: object
+              properties:
+                rapport: { type: string }
+                cout: { type: number }
       responses:
         '200':
-          description: Intervention terminée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Maintenance' }
 
   /maintenance/{id}/annuler:
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
     post:
-      tags: [Interventions]
-      summary: Annule une intervention planifiée
-      description: Rôles requis — admin, manager
+      summary: Annule une intervention planifiee (admin, manager)
       responses:
         '200':
-          description: Intervention annulée
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Maintenance' }

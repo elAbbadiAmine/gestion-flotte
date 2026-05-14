@@ -21,16 +21,38 @@ data:
       --kc-input-bg:     #111827;
     }
     body { background: var(--kc-bg) !important; font-family: 'Segoe UI', system-ui, sans-serif !important; margin: 0; }
-    #kc-container-wrapper, .login-pf-page { background: var(--kc-bg) !important; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    #kc-header, #kc-header-wrapper { background: transparent !important; text-align: center; padding: 0 0 24px !important; }
-    #kc-header-wrapper { color: var(--kc-text) !important; font-size: 22px !important; font-weight: 800 !important; }
-    #kc-form-wrapper, .card-pf { background: var(--kc-card) !important; border: 1px solid var(--kc-border) !important; border-radius: 12px !important; box-shadow: 0 25px 60px rgba(0,0,0,0.5) !important; padding: 32px !important; width: 380px !important; max-width: calc(100vw - 32px); }
+    #kc-container-wrapper, .login-pf-page { background: var(--kc-bg) !important; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    #kc-header { background: transparent !important; width: 380px !important; max-width: calc(100vw - 32px); text-align: center; padding: 0 0 16px !important; order: -1; position: static !important; float: none !important; }
+    #kc-header-wrapper { color: var(--kc-text) !important; font-size: 22px !important; font-weight: 800 !important; display: block !important; }
+    .login-pf-page-header { display: none !important; }
+    /* Une seule carte — supprimer le double fond */
+    .card-pf { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+    #kc-form-wrapper { background: var(--kc-card) !important; border: 1px solid var(--kc-border) !important; border-radius: 12px !important; box-shadow: 0 25px 60px rgba(0,0,0,0.5) !important; padding: 32px !important; width: 380px !important; max-width: calc(100vw - 32px); }
     #kc-page-title, .login-pf-page h1 { color: var(--kc-text) !important; font-size: 18px !important; font-weight: 600 !important; margin-bottom: 24px !important; text-align: center; }
-    .pf-c-form__label, label { color: var(--kc-muted) !important; font-size: 11px !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: 0.5px; }
-    .pf-c-form-control, input[type="text"], input[type="password"], input[type="email"] { background: var(--kc-input-bg) !important; border: 1px solid var(--kc-border) !important; border-radius: 6px !important; color: var(--kc-text) !important; padding: 10px 12px !important; font-size: 14px !important; width: 100% !important; box-sizing: border-box; }
+    .pf-c-form__label, .pf-v5-c-form__label, label { color: var(--kc-muted) !important; font-size: 11px !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pf-c-form-control, .pf-v5-c-form-control, input[type="text"], input[type="password"], input[type="email"] { background: var(--kc-input-bg) !important; border: 1px solid var(--kc-border) !important; border-radius: 6px !important; color: var(--kc-text) !important; padding: 10px 12px !important; font-size: 14px !important; width: 100% !important; box-sizing: border-box !important; height: 40px !important; }
     input[type="text"]:focus, input[type="password"]:focus { border-color: var(--kc-primary) !important; box-shadow: 0 0 0 3px rgba(234,88,12,0.2) !important; outline: none !important; }
-    #kc-login, .pf-c-button.pf-m-primary, input[type="submit"] { background: var(--kc-primary) !important; border: none !important; border-radius: 6px !important; color: #fff !important; font-size: 14px !important; font-weight: 600 !important; padding: 10px 20px !important; width: 100% !important; cursor: pointer !important; margin-top: 8px; }
+    /* Input group (champ mot de passe + bouton œil) */
+    .pf-c-input-group, .pf-v5-c-input-group { display: flex !important; align-items: stretch !important; width: 100% !important; background: transparent !important; border: none !important; }
+    .pf-c-input-group input, .pf-v5-c-input-group input { flex: 1 !important; width: auto !important; min-width: 0 !important; border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: none !important; }
+    /* Bouton œil — ciblage large pour couvrir toutes les versions KC */
+    button[aria-label], button.pf-m-plain, button.pf-m-control,
+    .pf-c-button.pf-m-control, .pf-v5-c-button.pf-m-control,
+    .pf-c-input-group button, .pf-v5-c-input-group button {
+      background: var(--kc-border) !important;
+      background-color: var(--kc-border) !important;
+      border: 1px solid var(--kc-border) !important;
+      border-left: none !important;
+      border-radius: 0 6px 6px 0 !important;
+      color: var(--kc-muted) !important;
+      padding: 0 12px !important;
+      cursor: pointer !important;
+      flex-shrink: 0 !important;
+      height: 40px !important;
+    }
+    #kc-login, .pf-c-button.pf-m-primary, .pf-v5-c-button.pf-m-primary, input[type="submit"] { background: var(--kc-primary) !important; border: none !important; border-radius: 6px !important; color: #fff !important; font-size: 14px !important; font-weight: 600 !important; padding: 10px 20px !important; width: 100% !important; cursor: pointer !important; margin-top: 8px; }
     #kc-login:hover, input[type="submit"]:hover { background: var(--kc-primary-dark) !important; }
     #kc-form-options a, .login-pf-page a { color: var(--kc-primary) !important; text-decoration: none; font-size: 13px; }
-    .alert-error, .pf-c-alert.pf-m-danger { background: rgba(220,38,38,0.15) !important; border: 1px solid rgba(220,38,38,0.4) !important; border-radius: 6px !important; color: #fca5a5 !important; padding: 10px 14px !important; margin-bottom: 16px !important; }
+    .alert-error, .pf-c-alert.pf-m-danger, .pf-v5-c-alert.pf-m-danger { background: rgba(220,38,38,0.15) !important; border: 1px solid rgba(220,38,38,0.4) !important; border-radius: 6px !important; color: #fca5a5 !important; padding: 10px 14px !important; margin-bottom: 16px !important; }
     #rememberMe { accent-color: var(--kc-primary); }
+    .form-group, .pf-c-form__group, .pf-v5-c-form__group { margin-bottom: 16px !important; }

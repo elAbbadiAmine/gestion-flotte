@@ -1,24 +1,15 @@
 openapi: 3.0.3
 info:
-  title: svc-evenements API
-  description: |
-    Service de gestion des alertes. Consomme les événements Kafka de tous les services
-    et les expose via REST pour consultation par le frontend.
+  title: svc-evenements
+  description: Alertes generees depuis les evenements Kafka de tous les services.
   version: 1.0.0
 
 servers:
-  - url: http://localhost:3005
-    description: Local dev
   - url: http://svc-evenements:3005
-    description: Kubernetes interne
-
-tags:
-  - name: Alertes
-    description: Consultation et gestion des alertes
 
 components:
   securitySchemes:
-    bearerAuth:
+    bearer:
       type: http
       scheme: bearer
       bearerFormat: JWT
@@ -27,150 +18,61 @@ components:
     Alerte:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        type:
-          type: string
-          description: Type d'événement source
-          example: VEHICULE_CREE
-        source_service:
-          type: string
-          description: Service qui a produit l'événement
-          example: svc-vehicules
-        message:
-          type: string
-          example: Véhicule AB-123-CD créé
-        payload:
-          type: object
-          description: Données brutes de l'événement Kafka
-          additionalProperties: true
-        lu:
-          type: boolean
-          default: false
-        lu_at:
-          type: string
-          format: date-time
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-
-    AlerteLueResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        lu:
-          type: boolean
-          example: true
-        lu_at:
-          type: string
-          format: date-time
+        id: { type: string, format: uuid }
+        type: { type: string, example: VEHICULE_CREE }
+        source_service: { type: string, example: svc-vehicules }
+        message: { type: string }
+        payload: { type: object }
+        lu: { type: boolean, default: false }
+        lu_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
 
 security:
-  - bearerAuth: []
+  - bearer: []
 
 paths:
   /alertes:
     get:
-      tags: [Alertes]
-      summary: Liste toutes les alertes
+      summary: Liste les alertes (triees par date decroissante)
       parameters:
-        - name: non_lues
-          in: query
-          schema:
-            type: boolean
-          description: Si true, retourne uniquement les alertes non lues
-        - name: type
-          in: query
-          schema:
-            type: string
-          description: Filtrer par type d'événement (ex. MISSION_ECHOUEE)
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 50
-            maximum: 200
-          description: Nombre de résultats
+        - { name: non_lues, in: query, schema: { type: boolean } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
       responses:
         '200':
-          description: Liste des alertes (triées par date décroissante)
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Alerte'
-              example:
-                - id: "uuid"
-                  type: "VEHICULE_CREE"
-                  source_service: "svc-vehicules"
-                  message: "Véhicule AB-123-CD créé"
-                  payload:
-                    vehicule_id: "uuid"
-                    immatriculation: "AB-123-CD"
-                  lu: false
-                  lu_at: null
-                  created_at: "2025-10-01T10:00:00Z"
-        '401':
-          description: Token manquant ou invalide
+                items: { $ref: '#/components/schemas/Alerte' }
 
   /alertes/{id}:
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
 
     get:
-      tags: [Alertes]
-      summary: Retourne une alerte par UUID
+      summary: Retourne une alerte
       responses:
         '200':
-          description: Alerte trouvée
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Alerte'
-        '404':
-          description: Alerte non trouvée
+              schema: { $ref: '#/components/schemas/Alerte' }
+        '404': { description: Non trouvee }
+
+  /alertes/{id}/lu:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+
+    put:
+      summary: Marque une alerte comme lue
+      responses:
+        '200':
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: false
-                  error:
-                    type: string
-                    example: Alerte non trouvée
-
-  /alertes/{id}/lu:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    put:
-      tags: [Alertes]
-      summary: Marque une alerte comme lue
-      responses:
-        '200':
-          description: Alerte marquée comme lue
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AlerteLueResponse'
-        '404':
-          description: Alerte non trouvée
+                  id: { type: string, format: uuid }
+                  lu: { type: boolean, example: true }
+                  lu_at: { type: string, format: date-time }
+        '404': { description: Non trouvee }

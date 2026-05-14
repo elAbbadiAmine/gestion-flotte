@@ -1,26 +1,15 @@
 openapi: 3.0.3
 info:
-  title: svc-localisation API
-  description: |
-    Service de tracking GPS. Expose l'historique et les dernières positions via REST.
-
-    **Note :** Les positions sont reçues via gRPC streaming (port 50051, `LocalisationService.StreamPositions`),
-    pas via cette API REST. Cette spec couvre uniquement les endpoints REST de consultation.
+  title: svc-localisation
+  description: API REST de consultation des positions GPS. La reception des positions se fait via gRPC (port 50051).
   version: 1.0.0
 
 servers:
-  - url: http://localhost:3004
-    description: Local dev
   - url: http://svc-localisation:3004
-    description: Kubernetes interne
-
-tags:
-  - name: Positions
-    description: Consultation des positions GPS
 
 components:
   securitySchemes:
-    bearerAuth:
+    bearer:
       type: http
       scheme: bearer
       bearerFormat: JWT
@@ -29,123 +18,53 @@ components:
     Position:
       type: object
       properties:
-        vehicule_id:
-          type: string
-          format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
-        latitude:
-          type: number
-          format: double
-          example: 48.8566
-        longitude:
-          type: number
-          format: double
-          example: 2.3522
-        vitesse:
-          type: number
-          format: double
-          description: Vitesse en km/h
-          example: 60.5
-        timestamp:
-          type: string
-          format: date-time
-          example: "2025-10-01T10:00:00Z"
+        vehicule_id: { type: string, format: uuid }
+        latitude: { type: number, format: double, example: 48.8566 }
+        longitude: { type: number, format: double, example: 2.3522 }
+        vitesse: { type: number, description: Vitesse en km/h, example: 60.5 }
+        timestamp: { type: string, format: date-time }
 
 security:
-  - bearerAuth: []
+  - bearer: []
 
 paths:
   /localisation/dernieres:
     get:
-      tags: [Positions]
-      summary: Dernière position connue de chaque véhicule
-      description: |
-        Retourne la dernière position enregistrée pour chaque véhicule qui a
-        transmis au moins une position. Utilise la fonction TimescaleDB `last()`.
+      summary: Dernière position de chaque vehicule actif
       responses:
         '200':
-          description: Dernières positions
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Position'
-              example:
-                - vehicule_id: "550e8400-e29b-41d4-a716-446655440000"
-                  latitude: 48.8566
-                  longitude: 2.3522
-                  vitesse: 60.5
-                  timestamp: "2025-10-01T10:00:00Z"
-        '401':
-          description: Token manquant ou invalide
+                items: { $ref: '#/components/schemas/Position' }
 
   /localisation/{vehicule_id}/historique:
     parameters:
-      - name: vehicule_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
+      - { name: vehicule_id, in: path, required: true, schema: { type: string, format: uuid } }
     get:
-      tags: [Positions]
-      summary: Historique des positions d'un véhicule
-      description: |
-        Retourne l'historique des positions GPS pour un véhicule.
-        Par défaut : dernières 24 heures, limité à 100 points.
+      summary: Historique des positions d'un vehicule
       parameters:
-        - name: depuis
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Date de début (ISO 8601)
-          example: "2025-10-01T00:00:00Z"
-        - name: jusqu_a
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Date de fin (ISO 8601)
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 100
-            maximum: 1000
-          description: Nombre maximum de points retournés
+        - { name: depuis, in: query, schema: { type: string, format: date-time } }
+        - { name: jusqu_a, in: query, schema: { type: string, format: date-time } }
+        - { name: limit, in: query, schema: { type: integer, default: 100 } }
       responses:
         '200':
-          description: Historique des positions
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Position'
-        '404':
-          description: Aucune position trouvée pour ce véhicule
+                items: { $ref: '#/components/schemas/Position' }
+        '404': { description: Aucune position pour ce vehicule }
 
   /localisation/{vehicule_id}/derniere:
     parameters:
-      - name: vehicule_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
+      - { name: vehicule_id, in: path, required: true, schema: { type: string, format: uuid } }
     get:
-      tags: [Positions]
-      summary: Dernière position d'un véhicule spécifique
+      summary: Dernière position d'un vehicule specifique
       responses:
         '200':
-          description: Dernière position
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Position'
-        '404':
-          description: Aucune position connue pour ce véhicule
+              schema: { $ref: '#/components/schemas/Position' }
+        '404': { description: Aucune position connue }

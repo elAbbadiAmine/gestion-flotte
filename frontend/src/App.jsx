@@ -28,7 +28,7 @@ function App() {
           <span className="header-user">
             {username.toLowerCase() !== role ? `${username} · ` : ''}{label(role)}
           </span>
-          <button className="btn-logout" onClick={() => keycloak.logout({ redirectUri: 'http://localhost:5173' })}>
+          <button className="btn-logout" onClick={() => keycloak.logout({ redirectUri: window.location.origin + '/' })}>
             Déconnexion
           </button>
         </header>
