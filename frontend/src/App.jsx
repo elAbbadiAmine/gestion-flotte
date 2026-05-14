@@ -5,6 +5,7 @@ import { VehiculesPage } from './pages/VehiculesPage'
 import { ConducteursPage } from './pages/ConducteursPage'
 import { CartePage } from './pages/CartePage'
 import { MaintenancePage } from './pages/MaintenancePage'
+import { AlertesPage } from './pages/AlertesPage'
 
 const ROLES = ['admin', 'manager', 'technicien', 'utilisateur']
 
@@ -23,6 +24,7 @@ function App() {
           <NavLink to="/conducteurs" className={navClass}>Conducteurs</NavLink>
           <NavLink to="/maintenance" className={navClass}>Maintenance</NavLink>
           <NavLink to="/carte" className={navClass}>Carte</NavLink>
+          <NavLink to="/alertes" className={navClass}>Alertes</NavLink>
           <span className="header-user">
             {username.toLowerCase() !== role ? `${username} · ` : ''}{label(role)}
           </span>
@@ -37,6 +39,7 @@ function App() {
             <Route path="/conducteurs" element={<ConducteursPage />} />
             <Route path="/maintenance" element={<MaintenancePage />} />
             <Route path="/carte" element={<CartePage />} />
+            <Route path="/alertes" element={<AlertesPage />} />
           </Routes>
         </main>
       </div>

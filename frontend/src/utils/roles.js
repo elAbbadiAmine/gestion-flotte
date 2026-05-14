@@ -18,3 +18,14 @@ export function canManageMaintenance() {
   const r = getRole()
   return r === 'admin' || r === 'manager' || r === 'technicien'
 }
+
+// tous les rôles connectés voient les alertes
+export function canSeeAlertes() {
+  return true
+}
+
+// seuls admin et manager voient les alertes critique (geofencing, suppressions)
+export function canSeeAlertsCritiques() {
+  const r = getRole()
+  return r === 'admin' || r === 'manager'
+}

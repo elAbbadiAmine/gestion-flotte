@@ -217,6 +217,10 @@ table.data-table tbody tr:hover { background: var(--page-bg); }
 .badge-annulee     { background: var(--gray-bg);    color: var(--gray-text);    border-color: var(--gray-border); }
 .badge-inactif     { background: var(--danger-bg);  color: var(--danger-text);  border-color: var(--danger-border); }
 .badge-suspendu    { background: var(--danger-bg);  color: var(--danger-text);  border-color: var(--danger-border); }
+.badge-info        { background: var(--info-bg);    color: var(--info-text);    border-color: var(--info-border); }
+.badge-warning     { background: var(--warn-bg);    color: var(--warn-text);    border-color: var(--warn-border); }
+.badge-critique    { background: var(--danger-bg);  color: var(--danger-text);  border-color: var(--danger-border); }
+.badge-lu          { background: var(--gray-bg);    color: var(--gray-text);    border-color: var(--gray-border); }
 
 /* ── Modal ──────────────────────────────────────────────── */
 .modal-overlay {

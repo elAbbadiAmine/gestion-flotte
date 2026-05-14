@@ -19,6 +19,13 @@ const MAP = {
   manager:             'Manager',
   technicien:          'Technicien',
   utilisateur:         'Utilisateur',
+  info:                'Info',
+  warning:             'Avertissement',
+  critique:            'Critique',
+  maintenance_planifiee: 'Maintenance planifiée',
+  maintenance_terminee:  'Maintenance terminée',
+  vehicule_supprime:     'Véhicule supprimé',
+  geofencing:            'Geofencing',
 }
 
 export const label = (val) => MAP[val] ?? val.replace(/_/g, ' ')
