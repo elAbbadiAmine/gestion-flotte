@@ -83,6 +83,7 @@ describe('VehiculeService', () => {
   });
 
   test('deleteVehicule supprime et publie un event Kafka', async () => {
+    repo.findById.mockResolvedValue(mockVehicule);
     repo.remove.mockResolvedValue(1);
     await service.deleteVehicule('uuid-123');
     expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', {
@@ -92,7 +93,7 @@ describe('VehiculeService', () => {
   });
 
   test('deleteVehicule throw si non trouvé', async () => {
-    repo.remove.mockResolvedValue(0);
+    repo.findById.mockResolvedValue(null);
     await expect(service.deleteVehicule('inexistant')).rejects.toThrow('Véhicule non trouvé');
   });
 });
