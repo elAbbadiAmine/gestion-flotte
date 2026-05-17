@@ -91,6 +91,7 @@ describe('createConducteur', () => {
 
 describe('updateConducteur', () => {
   test('met à jour et publie', async () => {
+    repo.findById.mockResolvedValue(conducteurFixture);
     repo.update.mockResolvedValue({ ...conducteurFixture, nom: 'Martin' });
     const result = await service.updateConducteur('uuid-1', { nom: 'Martin' });
     expect(result.nom).toBe('Martin');
@@ -98,20 +99,21 @@ describe('updateConducteur', () => {
   });
 
   test('lève une erreur si non trouvé', async () => {
-    repo.update.mockResolvedValue(null);
+    repo.findById.mockResolvedValue(null);
     await expect(service.updateConducteur('uuid-x', {})).rejects.toThrow('Conducteur non trouvé');
   });
 });
 
 describe('deleteConducteur', () => {
   test('supprime et publie', async () => {
+    repo.findById.mockResolvedValue(conducteurFixture);
     repo.remove.mockResolvedValue(1);
     await service.deleteConducteur('uuid-1');
     expect(kafka.publishEvent).toHaveBeenCalledWith('conducteurs', expect.objectContaining({ type: 'conducteur.deleted' }));
   });
 
   test('lève une erreur si non trouvé', async () => {
-    repo.remove.mockResolvedValue(0);
+    repo.findById.mockResolvedValue(null);
     await expect(service.deleteConducteur('uuid-x')).rejects.toThrow('Conducteur non trouvé');
   });
 });

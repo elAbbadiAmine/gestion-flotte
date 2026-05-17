@@ -100,8 +100,8 @@ describe('terminerMaintenance', () => {
     await expect(service.terminerMaintenance('uuid-x', {})).rejects.toThrow('Maintenance non trouvée');
   });
 
-  test('rejette si non en_cours', async () => {
-    repo.findById.mockResolvedValue({ ...fixture, statut: 'planifiee' });
+  test('rejette si terminee', async () => {
+    repo.findById.mockResolvedValue({ ...fixture, statut: 'terminee' });
     await expect(service.terminerMaintenance('uuid-1', {})).rejects.toThrow('Statut invalide');
   });
 });
