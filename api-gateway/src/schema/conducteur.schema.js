@@ -3,7 +3,6 @@ const typeDefs = gql`
   enum StatutConducteur {
     actif
     inactif
-    en_mission
     suspendu
   }
   type Conducteur {
@@ -16,6 +15,8 @@ const typeDefs = gql`
     categoriesPermis: [String!]!
     dateExpirationPermis: String!
     statut: StatutConducteur!
+    vehiculeId: ID
+    missionDebutAt: String
     createdAt: String
     updatedAt: String
   }
@@ -48,7 +49,7 @@ const typeDefs = gql`
     updateConducteur(id: ID!, input: UpdateConducteurInput!): Conducteur!
     deleteConducteur(id: ID!): Boolean!
     assignerMission(id: ID!, vehiculeId: ID!, missionId: String!): Boolean!
-    terminerMission(id: ID!, vehiculeId: ID!, missionId: String!): Boolean!
+    terminerMission(id: ID!, missionId: String!): Boolean!
   }
 `;
 module.exports = typeDefs;

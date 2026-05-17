@@ -34,6 +34,8 @@ const start = async () => {
   app.listen(port, () => logger.info({ port }, 'svc-conducteurs démarré'));
 };
 
-start().catch((err) => { logger.error({ err }, 'Démarrage échoué'); process.exit(1); });
+if (require.main === module) {
+  start().catch((err) => { logger.error({ err }, 'Démarrage échoué'); process.exit(1); });
+}
 
 module.exports = app;

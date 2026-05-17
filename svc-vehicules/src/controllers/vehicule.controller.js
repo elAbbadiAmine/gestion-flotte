@@ -41,7 +41,8 @@ const remove = async (req, res) => {
     await service.deleteVehicule(req.params.id);
     res.status(204).send();
   } catch (e) {
-    res.status(404).json({ error: e.message });
+    const status = e.message === 'Véhicule non trouvé' ? 404 : 409;
+    res.status(status).json({ error: e.message });
   }
 };
 

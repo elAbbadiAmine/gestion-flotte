@@ -37,12 +37,15 @@ const handlers = {
       source: 'vehicules',
     });
   },
-  'geofencing.violation': async (payload) => {
+  'geofence.violation': async (payload) => {
+    const vehiculeId = payload.vehicule_id || payload.vehiculeId || null;
+    const existe = await repo.findUnreadByTypeAndVehicule('geofencing', vehiculeId);
+    if (existe) return;
     await repo.create({
       type: 'geofencing',
       niveau: 'critique',
-      vehiculeId: payload.vehiculeId || null,
-      message: `Violation de zone géographique détectée pour le véhicule ${payload.vehiculeId}`,
+      vehiculeId,
+      message: `Véhicule hors zone ${payload.zone} (${payload.distance_metres} m)`,
       source: 'localisation',
     });
   },

@@ -38,7 +38,7 @@ const demarrerMaintenance = async (id) => {
 const terminerMaintenance = async (id, data) => {
   const i = await repo.findById(id);
   if (!i) throw new Error('Maintenance non trouvée');
-  if (i.statut !== 'en_cours') throw new Error(`Statut invalide : ${i.statut}`);
+  if (i.statut !== 'en_cours' && i.statut !== 'planifiee') throw new Error(`Statut invalide : ${i.statut}`);
   const updated = await repo.update(id, { statut: 'terminee', ...data });
   maintenancesTermineesTotal.inc();
   logger.info({ id, vehiculeId: updated.vehiculeId }, 'Maintenance terminée');

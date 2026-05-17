@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 
 const ZONES_AUTORISEES = [
-  { nom: 'Paris_Centre', latitude: 48.8566, longitude: 2.3522, rayon_m: 10000 },
+  { nom: 'Rouen_Centre', latitude: 49.4432, longitude: 1.0999, rayon_m: 5000 },
 ];
 
 const save = async ({ vehicule_id, latitude, longitude, time }) => {

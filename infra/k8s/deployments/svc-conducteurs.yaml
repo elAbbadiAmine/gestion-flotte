@@ -18,22 +18,56 @@ spec:
         prometheus.io/path: "/metrics"
     spec:
       containers:
-      - name: svc-conducteurs
-        image: svc-conducteurs:dev
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 3002
-        env:
-        - name: PORT
-          value: "3002"
-        - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://otel-collector-opentelemetry-collector:4317"
-        - name: OTEL_SERVICE_NAME
-          value: "svc-conducteurs"
-        resources:
-          limits:
-            memory: 256Mi
-            cpu: "250m"
-          requests:
-            memory: 128Mi
-            cpu: "100m"
+        - name: svc-conducteurs
+          image: svc-conducteurs:v7
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3002
+          env:
+            - name: PORT
+              value: "3002"
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_URL_CONDUCTEURS
+            - name: KAFKA_BROKER
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: KAFKA_BROKER
+            - name: KEYCLOAK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: KEYCLOAK_URL
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: KEYCLOAK_REALM
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector-opentelemetry-collector:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "svc-conducteurs"
+            - name: KAFKAJS_NO_PARTITIONER_WARNING
+              value: "1"
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 5
+            periodSeconds: 10

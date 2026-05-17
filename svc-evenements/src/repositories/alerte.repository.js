@@ -11,8 +11,11 @@ const findAll = (filters = {}) => {
 
 const findById = (id) => Alerte.findOne({ where: { id } });
 
+const findUnreadByTypeAndVehicule = (type, vehiculeId) =>
+  Alerte.findOne({ where: { type, vehiculeId, lu: false } });
+
 const create = (data) => Alerte.create(data);
 
 const update = (id, data) => Alerte.update(data, { where: { id }, returning: true }).then(([, rows]) => rows[0]);
 
-module.exports = { findAll, findById, create, update };
+module.exports = { findAll, findById, findUnreadByTypeAndVehicule, create, update };

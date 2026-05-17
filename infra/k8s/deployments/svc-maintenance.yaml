@@ -14,22 +14,44 @@ spec:
         app: svc-maintenance
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "3005"
+        prometheus.io/port: "3003"
         prometheus.io/path: "/metrics"
     spec:
       containers:
       - name: svc-maintenance
-        image: svc-maintenance:dev
+        image: svc-maintenance:v1
         imagePullPolicy: Never
         ports:
-        - containerPort: 3005
+        - containerPort: 3003
         env:
         - name: PORT
-          value: "3005"
+          value: "3003"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_URL_MAINTENANCE
+        - name: KAFKA_BROKER
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_BROKER
+        - name: KEYCLOAK_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_URL
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: KEYCLOAK_REALM
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://otel-collector-opentelemetry-collector:4317"
         - name: OTEL_SERVICE_NAME
           value: "svc-maintenance"
+        - name: KAFKAJS_NO_PARTITIONER_WARNING
+          value: "1"
         resources:
           limits:
             memory: 256Mi
@@ -37,3 +59,15 @@ spec:
           requests:
             memory: 128Mi
             cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3003
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3003
+          initialDelaySeconds: 5
+          periodSeconds: 10

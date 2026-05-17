@@ -28,6 +28,8 @@ const start = async () => {
   app.listen(PORT, () => logger.info(`svc-localisation démarré sur port ${PORT}`));
 };
 
-start().catch((err) => logger.error('Erreur démarrage:', err.message));
+if (require.main === module) {
+  start().catch((err) => logger.error('Erreur démarrage:', err.message));
+}
 
 module.exports = app;

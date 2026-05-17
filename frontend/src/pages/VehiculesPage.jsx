@@ -40,7 +40,7 @@ const DELETE_VEHICULE = gql`
   }
 `
 
-const STATUTS = ['disponible', 'en_mission', 'en_maintenance', 'hors_service']
+const STATUTS = ['disponible', 'hors_service']
 const EMPTY_FORM = { immatriculation: '', marque: '', modele: '', annee: new Date().getFullYear(), statut: 'disponible', kilometrage: 0 }
 
 const FIELDS = [
@@ -52,7 +52,7 @@ const FIELDS = [
 ]
 
 export function VehiculesPage() {
-  const { loading, error, data, refetch } = useQuery(GET_VEHICULES)
+  const { loading, error, data, refetch } = useQuery(GET_VEHICULES, { fetchPolicy: 'network-only' })
   const [modal, setModal] = useState(null)
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)

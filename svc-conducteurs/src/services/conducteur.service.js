@@ -21,27 +21,48 @@ const createConducteur = async (data) => {
 };
 
 const updateConducteur = async (id, data) => {
-  if (data.dateExpirationPermis || data.categoriesPermis) validerPermis(data);
+  if (data.categoriesPermis) validerCategoriesPermis(data.categoriesPermis);
+  const avant = await repo.findById(id);
+  if (!avant) throw new Error('Conducteur non trouvé');
+  const statutChange = data.statut && data.statut !== avant.statut;
+  const devenirIndisponible = statutChange && (data.statut === 'inactif' || data.statut === 'suspendu');
+  if (devenirIndisponible && avant.vehiculeId) {
+    data = { ...data, vehiculeId: null, missionDebutAt: null };
+    logger.info({ id, vehiculeId: avant.vehiculeId, statut: data.statut }, 'Conducteur désactivé — libération véhicule');
+    await publishEvent('missions', {
+      type: 'mission.completed',
+      payload: { conducteurId: id, vehiculeId: avant.vehiculeId, missionId: `SUSPEND-${id}` },
+    });
+  }
   const c = await repo.update(id, data);
-  if (!c) throw new Error('Conducteur non trouvé');
   logger.info({ id }, 'Conducteur mis à jour');
   await publishEvent('conducteurs', { type: 'conducteur.updated', payload: c });
   return c;
 };
 
 const deleteConducteur = async (id) => {
-  const count = await repo.remove(id);
-  if (!count) throw new Error('Conducteur non trouvé');
+  const c = await repo.findById(id);
+  if (!c) throw new Error('Conducteur non trouvé');
+  const vehiculeId = c.vehiculeId;
+  await repo.remove(id);
   conducteursSupprTotal.inc();
   logger.info({ id }, 'Conducteur supprimé');
   await publishEvent('conducteurs', { type: 'conducteur.deleted', payload: { id } });
+  if (vehiculeId) {
+    logger.info({ id, vehiculeId }, 'Conducteur supprimé — libération véhicule');
+    await publishEvent('missions', {
+      type: 'mission.completed',
+      payload: { conducteurId: id, vehiculeId, missionId: `DELETE-${id}` },
+    });
+  }
 };
 
 const assignerMission = async (conducteurId, vehiculeId, missionId) => {
   const c = await repo.findById(conducteurId);
   if (!c) throw new Error('Conducteur non trouvé');
   if (c.statut !== 'actif') throw new Error(`Conducteur non disponible : ${c.statut}`);
-  await repo.update(conducteurId, { statut: 'en_mission' });
+  if (c.vehiculeId) throw new Error('Conducteur déjà en mission');
+  await repo.update(conducteurId, { vehiculeId, missionDebutAt: new Date() });
   logger.info({ conducteurId, vehiculeId, missionId }, 'Mission assignée');
   try {
     await publishEvent('missions', {
@@ -49,17 +70,18 @@ const assignerMission = async (conducteurId, vehiculeId, missionId) => {
       payload: { conducteurId, vehiculeId, missionId },
     });
   } catch (err) {
-    await repo.update(conducteurId, { statut: 'actif' });
+    await repo.update(conducteurId, { vehiculeId: null });
     logger.error({ err, conducteurId }, 'Rollback assignation mission');
     throw new Error('Échec publication event — rollback effectué');
   }
 };
 
-const terminerMission = async (conducteurId, vehiculeId, missionId) => {
+const terminerMission = async (conducteurId, missionId) => {
   const c = await repo.findById(conducteurId);
   if (!c) throw new Error('Conducteur non trouvé');
-  await repo.update(conducteurId, { statut: 'actif' });
-  logger.info({ conducteurId, missionId }, 'Mission terminée');
+  const vehiculeId = c.vehiculeId;
+  await repo.update(conducteurId, { vehiculeId: null, missionDebutAt: null });
+  logger.info({ conducteurId, vehiculeId, missionId }, 'Mission terminée');
   await publishEvent('missions', {
     type: 'mission.completed',
     payload: { conducteurId, vehiculeId, missionId },
@@ -67,7 +89,7 @@ const terminerMission = async (conducteurId, vehiculeId, missionId) => {
 };
 
 const echouerMission = async (conducteurId, vehiculeId, missionId, motif) => {
-  await repo.update(conducteurId, { statut: 'actif' });
+  await repo.update(conducteurId, { vehiculeId: null });
   logger.warn({ conducteurId, missionId, motif }, 'Mission échouée — compensation');
   await publishEvent('missions', {
     type: 'mission.failed',
@@ -75,16 +97,19 @@ const echouerMission = async (conducteurId, vehiculeId, missionId, motif) => {
   });
 };
 
+const CATEGORIES_VALIDES = ['A', 'A1', 'A2', 'B', 'B1', 'BE', 'C', 'C1', 'CE', 'D', 'D1'];
+
+const validerCategoriesPermis = (categories) => {
+  const invalides = categories.filter(c => !CATEGORIES_VALIDES.includes(c));
+  if (invalides.length) throw new Error(`Catégories invalides : ${invalides.join(', ')}`);
+};
+
 const validerPermis = (data) => {
   if (data.dateExpirationPermis) {
     const expiration = new Date(data.dateExpirationPermis);
     if (expiration <= new Date()) throw new Error('Permis expiré');
   }
-  const categoriesValides = ['A', 'A1', 'A2', 'B', 'B1', 'BE', 'C', 'C1', 'CE', 'D', 'D1'];
-  if (data.categoriesPermis) {
-    const invalides = data.categoriesPermis.filter(c => !categoriesValides.includes(c));
-    if (invalides.length) throw new Error(`Catégories invalides : ${invalides.join(', ')}`);
-  }
+  if (data.categoriesPermis) validerCategoriesPermis(data.categoriesPermis);
 };
 
 module.exports = {

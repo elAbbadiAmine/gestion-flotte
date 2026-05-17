@@ -11,9 +11,11 @@ const Conducteur = sequelize.define('Conducteur', {
   categoriesPermis: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: false, defaultValue: ['B'] },
   dateExpirationPermis: { type: DataTypes.DATEONLY, allowNull: false },
   statut: {
-    type: DataTypes.ENUM('actif', 'inactif', 'en_mission', 'suspendu'),
+    type: DataTypes.ENUM('actif', 'inactif', 'suspendu'),
     defaultValue: 'actif',
   },
+  vehiculeId: { type: DataTypes.UUID, allowNull: true },
+  missionDebutAt: { type: DataTypes.DATE, allowNull: true },
 }, { tableName: 'conducteurs', timestamps: true });
 
 module.exports = Conducteur;

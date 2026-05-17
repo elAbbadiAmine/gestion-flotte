@@ -2,12 +2,17 @@ import { useQuery, gql } from '@apollo/client'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import markerIcon from 'leaflet/dist/images/marker-icon.png'
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
-import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({ iconRetinaUrl: markerIcon2x, iconUrl: markerIcon, shadowUrl: markerShadow })
+const createVehiculeIcon = (immat) => L.divIcon({
+  className: '',
+  html: `<div style="text-align:center;position:relative;width:64px">
+    <div style="background:#1e40af;color:white;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap;margin-bottom:2px;box-shadow:0 1px 3px rgba(0,0,0,0.3)">${immat}</div>
+    <div style="font-size:24px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3))">🚗</div>
+  </div>`,
+  iconSize: [64, 46],
+  iconAnchor: [32, 46],
+  popupAnchor: [0, -48],
+})
 
 const GET_POSITIONS = gql`
   query ToutesDernieresPositions {
@@ -20,13 +25,22 @@ const GET_POSITIONS = gql`
   }
 `
 
+const GET_VEHICULES = gql`
+  query GetVehiculesCarte {
+    vehicules { id immatriculation }
+  }
+`
+
 export function CartePage() {
   const { loading, error, data } = useQuery(GET_POSITIONS, { pollInterval: 5000 })
+  const { data: dataVehicules } = useQuery(GET_VEHICULES)
 
   if (loading) return <p className="state-loading">Chargement...</p>
   if (error)   return <p className="state-error">Erreur : {error.message}</p>
 
   const positions = data.toutesDernieresPositions
+  const vehiculeMap = {}
+  for (const v of dataVehicules?.vehicules ?? []) vehiculeMap[v.id] = v.immatriculation
 
   return (
     <div>
@@ -42,17 +56,19 @@ export function CartePage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
-          {positions.map((p) => (
-            <Marker key={p.vehiculeId} position={[p.latitude, p.longitude]}>
-              <Popup>
-                <strong>Véhicule</strong><br />
-                ID : {p.vehiculeId.slice(0, 8)}…<br />
-                Lat : {p.latitude.toFixed(5)}<br />
-                Lon : {p.longitude.toFixed(5)}<br />
-                Heure : {new Date(p.time).toLocaleTimeString()}
-              </Popup>
-            </Marker>
-          ))}
+          {positions.map((p) => {
+            const immat = vehiculeMap[p.vehiculeId] ?? p.vehiculeId.slice(0, 8)
+            return (
+              <Marker key={p.vehiculeId} position={[p.latitude, p.longitude]} icon={createVehiculeIcon(immat)}>
+                <Popup>
+                  <strong>{immat}</strong><br />
+                  Lat : {p.latitude.toFixed(5)}<br />
+                  Lon : {p.longitude.toFixed(5)}<br />
+                  Heure : {new Date(p.time).toLocaleTimeString()}
+                </Popup>
+              </Marker>
+            )
+          })}
         </MapContainer>
       </div>
     </div>

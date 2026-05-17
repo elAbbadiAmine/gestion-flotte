@@ -17,6 +17,15 @@ const GET_ALERTES = gql`
   }
 `
 
+const GET_VEHICULES = gql`
+  query GetVehiculesAlertes {
+    vehicules {
+      id
+      immatriculation
+    }
+  }
+`
+
 const MARQUER_LUE = gql`
   mutation MarquerAlerteLue($id: ID!) {
     marquerAlerteLue(id: $id) {
@@ -30,6 +39,12 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
+function replaceIds(msg, map) {
+  if (!msg) return '—'
+  return msg.replace(UUID_RE, (id) => map[id] ?? id.slice(0, 8) + '…')
+}
+
 export function AlertesPage() {
   const [filtreNiveau, setFiltreNiveau] = useState('')
   const [filtreLu, setFiltreLu] = useState('false')
@@ -41,11 +56,15 @@ export function AlertesPage() {
   if (filtreLu !== '') variables.lu = filtreLu === 'true'
 
   const { loading, error, data, refetch } = useQuery(GET_ALERTES, { variables })
+  const { data: dataVehicules } = useQuery(GET_VEHICULES)
   const [marquerLue] = useMutation(MARQUER_LUE)
+
+  const vehiculeMap = {}
+  for (const v of dataVehicules?.vehicules ?? []) vehiculeMap[v.id] = v.immatriculation
 
   const handleMarquer = async (id) => {
     await marquerLue({ variables: { id } })
-    refetch()
+    await refetch()
   }
 
   const alertes = (data?.alertes ?? []).filter(a => {
@@ -112,8 +131,8 @@ export function AlertesPage() {
                     <span className={`badge badge-${a.niveau}`}>{label(a.niveau)}</span>
                   </td>
                   <td>{label(a.type)}</td>
-                  <td style={{ maxWidth: 320 }}>{a.message}</td>
-                  <td>{a.vehiculeId ? a.vehiculeId.slice(0, 8) + '…' : '—'}</td>
+                  <td style={{ maxWidth: 320 }}>{replaceIds(a.message, vehiculeMap)}</td>
+                  <td>{a.vehiculeId ? (vehiculeMap[a.vehiculeId] ?? a.vehiculeId.slice(0, 8) + '…') : '—'}</td>
                   <td>
                     {a.lu
                       ? <span className="badge badge-lu">Lue</span>

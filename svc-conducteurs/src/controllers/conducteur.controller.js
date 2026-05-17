@@ -66,8 +66,8 @@ const assignerMission = async (req, res) => {
 
 const terminerMission = async (req, res) => {
   try {
-    const { vehiculeId, missionId } = req.body;
-    await service.terminerMission(req.params.id, vehiculeId, missionId);
+    const { missionId } = req.body;
+    await service.terminerMission(req.params.id, missionId);
     res.json({ success: true });
   } catch (err) {
     if (err.message === 'Conducteur non trouvé') return res.status(404).json({ success: false, error: err.message });

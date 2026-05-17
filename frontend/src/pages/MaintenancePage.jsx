@@ -38,18 +38,41 @@ const CREATE_MAINTENANCE = gql`
 const UPDATE_MAINTENANCE = gql`
   mutation UpdateMaintenance($id: ID!, $input: UpdateMaintenanceInput!) {
     updateMaintenance(id: $id, input: $input) {
-      id vehiculeId type statut datePlanifiee dateReelle
-      kilometrageIntervention kilometrageProchaine description cout technicien
+      id vehiculeId type statut datePlanifiee description technicien
     }
   }
 `
 
-const TYPES  = ['revision', 'reparation', 'controle_technique', 'pneus', 'autre']
-const STATUTS = ['planifiee', 'en_cours', 'terminee', 'annulee']
+const TERMINER_MAINTENANCE = gql`
+  mutation TerminerMaintenance($id: ID!, $input: TerminerMaintenanceInput!) {
+    terminerMaintenance(id: $id, input: $input) {
+      id statut dateReelle kilometrageIntervention kilometrageProchaine cout technicien
+    }
+  }
+`
+
+const ANNULER_MAINTENANCE = gql`
+  mutation AnnulerMaintenance($id: ID!, $motif: String) {
+    annulerMaintenance(id: $id, motif: $motif) {
+      id statut
+    }
+  }
+`
+
+const TYPES = ['revision', 'reparation', 'controle_technique', 'pneus', 'autre']
+
+const statutEffectif = (m) => {
+  if (m.statut === 'planifiee') {
+    const planifie = new Date(m.datePlanifiee)
+    planifie.setHours(0, 0, 0, 0)
+    const auj = new Date()
+    auj.setHours(0, 0, 0, 0)
+    if (planifie <= auj) return 'en_cours'
+  }
+  return m.statut
+}
 
 const EMPTY_CREATE = { vehiculeId: '', type: 'revision', datePlanifiee: '', description: '', technicien: '' }
-const EMPTY_UPDATE = { type: 'revision', statut: 'planifiee', datePlanifiee: '', dateReelle: '', kilometrageIntervention: '', kilometrageProchaine: '', description: '', cout: '', technicien: '' }
-
 function fmt(str) { return str ? str.slice(0, 10) : '—' }
 
 export function MaintenancePage() {
@@ -57,38 +80,48 @@ export function MaintenancePage() {
   const { data: dataV } = useQuery(GET_VEHICULES)
   const vehicules = dataV?.vehicules ?? []
   const vehiculeMap = Object.fromEntries(vehicules.map(v => [v.id, v.immatriculation]))
-  const [modal, setModal] = useState(null)
-  const [selected, setSelected] = useState(null)
+
+  const [modal, setModal]           = useState(null)
+  const [selected, setSelected]     = useState(null)
   const [formCreate, setFormCreate] = useState(EMPTY_CREATE)
-  const [formUpdate, setFormUpdate] = useState(EMPTY_UPDATE)
-  const [saving, setSaving] = useState(false)
+  const [formEdit, setFormEdit]     = useState({ type: 'revision', datePlanifiee: '', description: '', technicien: '' })
+  const [motifAnnul, setMotifAnnul] = useState('')
+  const [saving, setSaving]         = useState(false)
+  const [errMsg, setErrMsg]         = useState('')
 
   const peutModifier = canManageMaintenance()
 
-  const [createMaintenance] = useMutation(CREATE_MAINTENANCE)
-  const [updateMaintenance] = useMutation(UPDATE_MAINTENANCE)
+  const [createMaintenance]  = useMutation(CREATE_MAINTENANCE)
+  const [updateMaintenance]  = useMutation(UPDATE_MAINTENANCE)
+  const [terminerMaintenance] = useMutation(TERMINER_MAINTENANCE)
+  const [annulerMaintenance]  = useMutation(ANNULER_MAINTENANCE)
 
-  const openCreate = () => { setFormCreate(EMPTY_CREATE); setModal('create') }
+  const openCreate = () => { setFormCreate(EMPTY_CREATE); setErrMsg(''); setModal('create') }
+
   const openEdit = (m) => {
     setSelected(m)
-    setFormUpdate({
+    setFormEdit({
       type: m.type,
-      statut: m.statut,
       datePlanifiee: fmt(m.datePlanifiee) === '—' ? '' : fmt(m.datePlanifiee),
-      dateReelle:    fmt(m.dateReelle)    === '—' ? '' : fmt(m.dateReelle),
-      kilometrageIntervention: m.kilometrageIntervention ?? '',
-      kilometrageProchaine:    m.kilometrageProchaine    ?? '',
       description: m.description ?? '',
-      cout:        m.cout        ?? '',
       technicien:  m.technicien  ?? '',
     })
+    setErrMsg('')
     setModal('edit')
   }
-  const closeModal = () => { setModal(null); setSelected(null) }
 
-  const handleSubmitCreate = async (e) => {
+  const openAnnuler = (m) => {
+    setSelected(m)
+    setMotifAnnul('')
+    setErrMsg('')
+    setModal('annuler')
+  }
+
+  const closeModal = () => { setModal(null); setSelected(null); setErrMsg('') }
+
+  const handleCreate = async (e) => {
     e.preventDefault()
-    setSaving(true)
+    setSaving(true); setErrMsg('')
     try {
       const input = { ...formCreate }
       if (!input.description) delete input.description
@@ -96,26 +129,45 @@ export function MaintenancePage() {
       await createMaintenance({ variables: { input } })
       await refetch()
       closeModal()
+    } catch (err) {
+      setErrMsg(err.message)
     } finally { setSaving(false) }
   }
 
-  const handleSubmitUpdate = async (e) => {
+  const handleEdit = async (e) => {
     e.preventDefault()
-    setSaving(true)
+    setSaving(true); setErrMsg('')
     try {
-      const input = { ...formUpdate }
-      if (input.kilometrageIntervention) input.kilometrageIntervention = parseInt(input.kilometrageIntervention)
-      else delete input.kilometrageIntervention
-      if (input.kilometrageProchaine) input.kilometrageProchaine = parseInt(input.kilometrageProchaine)
-      else delete input.kilometrageProchaine
-      if (input.cout) input.cout = parseFloat(input.cout)
-      else delete input.cout
-      if (!input.dateReelle)   delete input.dateReelle
-      if (!input.description)  delete input.description
-      if (!input.technicien)   delete input.technicien
+      const input = { ...formEdit }
+      if (!input.description) delete input.description
+      if (!input.technicien)  delete input.technicien
       await updateMaintenance({ variables: { id: selected.id, input } })
       await refetch()
       closeModal()
+    } catch (err) {
+      setErrMsg(err.message)
+    } finally { setSaving(false) }
+  }
+
+  const handleTerminer = async (m) => {
+    setSaving(true)
+    try {
+      await terminerMaintenance({ variables: { id: m.id, input: {} } })
+      await refetch()
+    } catch (err) {
+      alert(err.message)
+    } finally { setSaving(false) }
+  }
+
+  const handleAnnuler = async (e) => {
+    e.preventDefault()
+    setSaving(true); setErrMsg('')
+    try {
+      await annulerMaintenance({ variables: { id: selected.id, motif: motifAnnul || undefined } })
+      await refetch()
+      closeModal()
+    } catch (err) {
+      setErrMsg(err.message)
     } finally { setSaving(false) }
   }
 
@@ -139,10 +191,6 @@ export function MaintenancePage() {
               <th>Type</th>
               <th>Statut</th>
               <th>Date planifiée</th>
-              <th>Date réelle</th>
-              <th>Km intervention</th>
-              <th>Km prochaine</th>
-              <th>Coût (€)</th>
               <th>Technicien</th>
               <th>Description</th>
               {peutModifier && <th>Actions</th>}
@@ -152,20 +200,30 @@ export function MaintenancePage() {
             {data.maintenances.map((m) => (
               <tr key={m.id}>
                 <td style={{ fontWeight: 500 }}>{vehiculeMap[m.vehiculeId] ?? m.vehiculeId.slice(0, 8) + '…'}</td>
-                <td>{m.type}</td>
-                <td><span className={`badge badge-${m.statut}`}>{label(m.statut)}</span></td>
+                <td>{label(m.type)}</td>
+                <td><span className={`badge badge-${statutEffectif(m)}`}>{label(statutEffectif(m))}</span></td>
                 <td>{fmt(m.datePlanifiee)}</td>
-                <td>{fmt(m.dateReelle)}</td>
-                <td>{m.kilometrageIntervention ?? '—'}</td>
-                <td>{m.kilometrageProchaine    ?? '—'}</td>
-                <td>{m.cout != null ? `${m.cout} €` : '—'}</td>
                 <td>{m.technicien ?? '—'}</td>
-                <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <td style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {m.description ?? '—'}
                 </td>
                 {peutModifier && (
-                  <td>
-                    <button onClick={() => openEdit(m)} className="btn btn-secondary btn-sm">Modifier</button>
+                  <td style={{ whiteSpace: 'nowrap', display: 'flex', gap: 4 }}>
+                    {statutEffectif(m) === 'planifiee' && (
+                      <>
+                        <button onClick={() => openEdit(m)} className="btn btn-secondary btn-sm">Modifier</button>
+                        <button onClick={() => openAnnuler(m)} className="btn btn-danger btn-sm">Annuler</button>
+                      </>
+                    )}
+                    {statutEffectif(m) === 'en_cours' && (
+                      <>
+                        <button onClick={() => handleTerminer(m)} disabled={saving} className="btn btn-primary btn-sm">Terminer</button>
+                        <button onClick={() => openAnnuler(m)} className="btn btn-danger btn-sm">Annuler</button>
+                      </>
+                    )}
+                    {(m.statut === 'terminee' || m.statut === 'annulee') && (
+                      <span style={{ color: '#94a3b8', fontSize: 12 }}>—</span>
+                    )}
                   </td>
                 )}
               </tr>
@@ -179,7 +237,7 @@ export function MaintenancePage() {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <h3 className="modal-title">Planifier une intervention</h3>
-            <form onSubmit={handleSubmitCreate}>
+            <form onSubmit={handleCreate}>
               <div className="form-group">
                 <label className="form-label">Véhicule</label>
                 <select value={formCreate.vehiculeId}
@@ -217,8 +275,9 @@ export function MaintenancePage() {
                   onChange={e => setFormCreate({ ...formCreate, description: e.target.value })}
                   rows={3} className="form-textarea" />
               </div>
+              {errMsg && <p style={{ color: '#dc2626', marginBottom: 8 }}>{errMsg}</p>}
               <div className="modal-footer">
-                <button type="button" onClick={closeModal} className="btn btn-secondary">Annuler</button>
+                <button type="button" onClick={closeModal} className="btn btn-secondary">Fermer</button>
                 <button type="submit" disabled={saving} className="btn btn-primary">
                   {saving ? 'Enregistrement...' : 'Planifier'}
                 </button>
@@ -228,50 +287,68 @@ export function MaintenancePage() {
         </div>
       )}
 
-      {/* Modal modification */}
+      {/* Modal modifier (planifiee seulement) */}
       {modal === 'edit' && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <h3 className="modal-title">Modifier l'intervention</h3>
-            <form onSubmit={handleSubmitUpdate}>
-              {[
-                { title: 'Type',   key: 'type',   options: TYPES   },
-                { title: 'Statut', key: 'statut', options: STATUTS },
-              ].map(({ title, key, options }) => (
-                <div key={key} className="form-group">
-                  <label className="form-label">{title}</label>
-                  <select value={formUpdate[key]}
-                    onChange={e => setFormUpdate({ ...formUpdate, [key]: e.target.value })}
-                    className="form-select">
-                    {options.map(o => <option key={o} value={o}>{label(o)}</option>)}
-                  </select>
-                </div>
-              ))}
-              {[
-                { title: 'Date planifiée',             key: 'datePlanifiee',          type: 'date'   },
-                { title: 'Date réelle',                key: 'dateReelle',             type: 'date'   },
-                { title: "Km à l'intervention",        key: 'kilometrageIntervention', type: 'number' },
-                { title: 'Km prochaine intervention',  key: 'kilometrageProchaine',   type: 'number' },
-                { title: 'Coût (€)',                   key: 'cout',                   type: 'number' },
-                { title: 'Technicien',                 key: 'technicien',             type: 'text'   },
-              ].map(({ title, key, type }) => (
-                <div key={key} className="form-group">
-                  <label className="form-label">{title}</label>
-                  <input type={type} value={formUpdate[key]}
-                    onChange={e => setFormUpdate({ ...formUpdate, [key]: e.target.value })}
-                    className="form-input" />
-                </div>
-              ))}
+            <form onSubmit={handleEdit}>
+              <div className="form-group">
+                <label className="form-label">Type</label>
+                <select value={formEdit.type}
+                  onChange={e => setFormEdit({ ...formEdit, type: e.target.value })}
+                  className="form-select">
+                  {TYPES.map(t => <option key={t} value={t}>{label(t)}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Date planifiée</label>
+                <input type="date" value={formEdit.datePlanifiee}
+                  onChange={e => setFormEdit({ ...formEdit, datePlanifiee: e.target.value })}
+                  className="form-input" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Technicien</label>
+                <input type="text" value={formEdit.technicien}
+                  onChange={e => setFormEdit({ ...formEdit, technicien: e.target.value })}
+                  className="form-input" />
+              </div>
               <div className="form-group">
                 <label className="form-label">Description</label>
-                <textarea value={formUpdate.description}
-                  onChange={e => setFormUpdate({ ...formUpdate, description: e.target.value })}
+                <textarea value={formEdit.description}
+                  onChange={e => setFormEdit({ ...formEdit, description: e.target.value })}
                   rows={3} className="form-textarea" />
               </div>
+              {errMsg && <p style={{ color: '#dc2626', marginBottom: 8 }}>{errMsg}</p>}
               <div className="modal-footer">
-                <button type="button" onClick={closeModal} className="btn btn-secondary">Annuler</button>
+                <button type="button" onClick={closeModal} className="btn btn-secondary">Fermer</button>
                 <button type="submit" disabled={saving} className="btn btn-primary">
                   {saving ? 'Enregistrement...' : 'Enregistrer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal annuler */}
+      {modal === 'annuler' && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Annuler l'intervention</h3>
+            <form onSubmit={handleAnnuler}>
+              <div className="form-group">
+                <label className="form-label">Motif (optionnel)</label>
+                <textarea value={motifAnnul}
+                  onChange={e => setMotifAnnul(e.target.value)}
+                  rows={3} className="form-textarea"
+                  placeholder="Raison de l'annulation..." />
+              </div>
+              {errMsg && <p style={{ color: '#dc2626', marginBottom: 8 }}>{errMsg}</p>}
+              <div className="modal-footer">
+                <button type="button" onClick={closeModal} className="btn btn-secondary">Fermer</button>
+                <button type="submit" disabled={saving} className="btn btn-danger">
+                  {saving ? 'Annulation...' : "Confirmer l'annulation"}
                 </button>
               </div>
             </form>

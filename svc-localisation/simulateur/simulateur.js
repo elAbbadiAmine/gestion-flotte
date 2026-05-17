@@ -14,8 +14,9 @@ const client = new proto.LocalisationService(
 );
 
 const VEHICULES = [
-  { id: 'aaaaaaaa-1111-1111-1111-bbbbbbbbbbbb', lat: 48.8566, lon: 2.3522 },
-  { id: 'cccccccc-3333-3333-3333-dddddddddddd', lat: 48.9000, lon: 2.4000 },
+  { id: '11111111-0000-0000-0000-000000000001', lat: 49.4432, lon: 1.0999 }, // RO-001-AA Clio — Rouen centre
+  { id: '11111111-0000-0000-0000-000000000002', lat: 49.4380, lon: 1.0900 }, // RO-002-BB 308 — Rouen
+  { id: '11111111-0000-0000-0000-000000000004', lat: 49.9254, lon: 1.0762 }, // RO-004-DD Kangoo — Dieppe (hors zone)
 ];
 
 const simuler = () => {

@@ -38,8 +38,8 @@ const assignerMission = async (id, vehiculeId, missionId) => {
   return true;
 };
 
-const terminerMission = async (id, vehiculeId, missionId) => {
-  await axios.post(`${BASE_URL}/api/v1/conducteurs/${id}/terminer-mission`, { vehiculeId, missionId });
+const terminerMission = async (id, missionId) => {
+  await axios.post(`${BASE_URL}/api/v1/conducteurs/${id}/terminer-mission`, { missionId });
   return true;
 };
 

@@ -7,16 +7,14 @@ import { label } from '../utils/labels'
 const GET_CONDUCTEURS = gql`
   query GetConducteurs {
     conducteurs {
-      id
-      nom
-      prenom
-      email
-      telephone
-      numeroPermis
-      categoriesPermis
-      dateExpirationPermis
-      statut
+      id nom prenom email telephone numeroPermis categoriesPermis dateExpirationPermis statut vehiculeId
     }
+  }
+`
+
+const GET_VEHICULES_DISPO = gql`
+  query GetVehiculesDispo {
+    vehicules { id immatriculation marque modele statut }
   }
 `
 
@@ -42,32 +40,50 @@ const DELETE_CONDUCTEUR = gql`
   }
 `
 
-const STATUTS = ['actif', 'inactif', 'en_mission', 'suspendu']
+const ASSIGNER_MISSION = gql`
+  mutation AssignerMission($id: ID!, $vehiculeId: ID!, $missionId: String!) {
+    assignerMission(id: $id, vehiculeId: $vehiculeId, missionId: $missionId)
+  }
+`
+
+const TERMINER_MISSION = gql`
+  mutation TerminerMission($id: ID!, $missionId: String!) {
+    terminerMission(id: $id, missionId: $missionId)
+  }
+`
+
+const STATUTS = ['actif', 'inactif', 'suspendu']
+
 const EMPTY_FORM = { nom: '', prenom: '', email: '', telephone: '', numeroPermis: '', categoriesPermis: 'B', dateExpirationPermis: '', statut: 'actif' }
 
 const FIELDS = [
-  { label: 'Nom',                                    name: 'nom',                    type: 'text'  },
-  { label: 'Prénom',                                 name: 'prenom',                 type: 'text'  },
-  { label: 'Email',                                  name: 'email',                  type: 'email' },
-  { label: 'Téléphone',                              name: 'telephone',              type: 'text'  },
-  { label: 'N° Permis',                              name: 'numeroPermis',           type: 'text'  },
+  { label: 'Nom',                                      name: 'nom',                  type: 'text'  },
+  { label: 'Prénom',                                   name: 'prenom',               type: 'text'  },
+  { label: 'Email',                                    name: 'email',                type: 'email' },
+  { label: 'Téléphone',                                name: 'telephone',            type: 'text'  },
+  { label: 'N° Permis',                                name: 'numeroPermis',         type: 'text'  },
   { label: 'Catégories permis (séparées par virgule)', name: 'categoriesPermis',     type: 'text'  },
-  { label: 'Date expiration permis',                 name: 'dateExpirationPermis',   type: 'date'  },
+  { label: 'Date expiration permis',                   name: 'dateExpirationPermis', type: 'date'  },
 ]
 
 export function ConducteursPage() {
   const { loading, error, data, refetch } = useQuery(GET_CONDUCTEURS)
+  const { data: dataVehicules, refetch: refetchVehicules } = useQuery(GET_VEHICULES_DISPO, { fetchPolicy: 'network-only' })
   const [modal, setModal] = useState(null)
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState(null)
   const [confirm, setConfirm] = useState(null)
+  const [missionForm, setMissionForm] = useState({ vehiculeId: '', missionId: '' })
 
   const peutModifier = canManageFleet()
 
   const [createConducteur] = useMutation(CREATE_CONDUCTEUR)
   const [updateConducteur] = useMutation(UPDATE_CONDUCTEUR)
   const [deleteConducteur] = useMutation(DELETE_CONDUCTEUR)
+  const [assignerMission] = useMutation(ASSIGNER_MISSION)
+  const [terminerMission] = useMutation(TERMINER_MISSION)
 
   const openCreate = () => { setForm(EMPTY_FORM); setSelected(null); setModal('create') }
   const openEdit = (c) => {
@@ -81,12 +97,24 @@ export function ConducteursPage() {
     })
     setModal('edit')
   }
-  const closeModal = () => { setModal(null); setSelected(null) }
+  const openAssigner = async (c) => {
+    setSelected(c)
+    setMissionForm({ vehiculeId: '', missionId: `MISSION-${Date.now()}` })
+    await refetchVehicules()
+    setModal('assigner')
+  }
+  const openTerminer = (c) => {
+    setSelected(c)
+    setMissionForm({ vehiculeId: '', missionId: `MISSION-${Date.now()}` })
+    setModal('terminer')
+  }
+  const closeModal = () => { setModal(null); setSelected(null); setFormError(null) }
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
+    setFormError(null)
     try {
       const input = {
         ...form,
@@ -96,6 +124,54 @@ export function ConducteursPage() {
       else await updateConducteur({ variables: { id: selected.id, input } })
       await refetch()
       closeModal()
+    } catch (err) {
+      setFormError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAssigner = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await assignerMission({
+        variables: { id: selected.id, vehiculeId: missionForm.vehiculeId, missionId: missionForm.missionId },
+        update(cache) {
+          cache.modify({
+            id: cache.identify({ __typename: 'Vehicule', id: missionForm.vehiculeId }),
+            fields: { statut: () => 'en_mission' },
+          })
+        },
+      })
+      await Promise.all([refetch(), refetchVehicules()])
+      closeModal()
+    } catch (err) {
+      setFormError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleTerminer = async () => {
+    setSaving(true)
+    const vehiculeId = selected.vehiculeId
+    try {
+      await terminerMission({
+        variables: { id: selected.id, missionId: `MISSION-${Date.now()}` },
+        update(cache) {
+          if (vehiculeId) {
+            cache.modify({
+              id: cache.identify({ __typename: 'Vehicule', id: vehiculeId }),
+              fields: { statut: () => 'disponible' },
+            })
+          }
+        },
+      })
+      await Promise.all([refetch(), refetchVehicules()])
+      closeModal()
+    } catch (err) {
+      setFormError(err.message)
     } finally {
       setSaving(false)
     }
@@ -109,6 +185,8 @@ export function ConducteursPage() {
       await refetch()
     },
   })
+
+  const vehiculesDispo = (dataVehicules?.vehicules ?? []).filter(v => v.statut === 'disponible')
 
   if (loading) return <p className="state-loading">Chargement...</p>
   if (error)   return <p className="state-error">Erreur : {error.message}</p>
@@ -152,6 +230,15 @@ export function ConducteursPage() {
                   <td>
                     <div className="td-actions">
                       <button onClick={() => openEdit(c)} className="btn btn-secondary btn-sm">Modifier</button>
+                      {c.statut === 'actif' && !c.vehiculeId && (
+                        <button onClick={() => openAssigner(c)} className="btn btn-primary btn-sm">Assigner</button>
+                      )}
+                      {c.statut !== 'actif' && !c.vehiculeId && (
+                        <button disabled title={`Conducteur ${label(c.statut)} — modifier le statut pour assigner`} className="btn btn-primary btn-sm" style={{ opacity: 0.4, cursor: 'not-allowed' }}>Assigner</button>
+                      )}
+                      {c.vehiculeId && (
+                        <button onClick={() => openTerminer(c)} className="btn btn-secondary btn-sm">Terminer mission</button>
+                      )}
                       <button onClick={() => askDelete(c)} className="btn btn-danger btn-sm">Supprimer</button>
                     </div>
                   </td>
@@ -170,11 +257,70 @@ export function ConducteursPage() {
         />
       )}
 
-      {modal && (
+      {modal === 'terminer' && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Terminer mission — {selected.prenom} {selected.nom}</h3>
+            <p style={{ color: '#64748b', marginBottom: 24 }}>
+              Le conducteur repassera en <strong>actif</strong> et son véhicule en <strong>disponible</strong>.
+            </p>
+            {formError && <p style={{ color: '#ef4444', marginBottom: 12, fontSize: 14 }}>{formError}</p>}
+            <div className="modal-footer">
+              <button type="button" onClick={closeModal} className="btn btn-secondary">Annuler</button>
+              <button onClick={handleTerminer} disabled={saving} className="btn btn-primary">
+                {saving ? 'En cours...' : 'Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modal === 'assigner' && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Assigner un véhicule — {selected.prenom} {selected.nom}</h3>
+            <form onSubmit={handleAssigner}>
+              {formError && <p style={{ color: '#ef4444', marginBottom: 12, fontSize: 14 }}>{formError}</p>}
+              <div className="form-group">
+                <label className="form-label">Véhicule disponible</label>
+                <select
+                  className="form-select"
+                  value={missionForm.vehiculeId}
+                  onChange={e => setMissionForm({ ...missionForm, vehiculeId: e.target.value })}
+                  required
+                >
+                  <option value="">— Sélectionner —</option>
+                  {vehiculesDispo.map(v => (
+                    <option key={v.id} value={v.id}>{v.immatriculation} — {v.marque} {v.modele}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Référence mission</label>
+                <input
+                  className="form-input"
+                  value={missionForm.missionId}
+                  onChange={e => setMissionForm({ ...missionForm, missionId: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="modal-footer">
+                <button type="button" onClick={closeModal} className="btn btn-secondary">Annuler</button>
+                <button type="submit" disabled={saving || !missionForm.vehiculeId} className="btn btn-primary">
+                  {saving ? 'Assignation...' : 'Assigner'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {(modal === 'create' || modal === 'edit') && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <h3 className="modal-title">{modal === 'create' ? 'Ajouter un conducteur' : 'Modifier le conducteur'}</h3>
             <form onSubmit={handleSubmit}>
+              {formError && <p style={{ color: '#ef4444', marginBottom: 12, fontSize: 14 }}>{formError}</p>}
               {FIELDS.map(({ label, name, type }) => (
                 <div key={name} className="form-group">
                   <label className="form-label">{label}</label>
@@ -188,14 +334,12 @@ export function ConducteursPage() {
                   />
                 </div>
               ))}
-
               <div className="form-group">
                 <label className="form-label">Statut</label>
                 <select name="statut" value={form.statut} onChange={handleChange} className="form-select">
                   {STATUTS.map(s => <option key={s} value={s}>{label(s)}</option>)}
                 </select>
               </div>
-
               <div className="modal-footer">
                 <button type="button" onClick={closeModal} className="btn btn-secondary">Annuler</button>
                 <button type="submit" disabled={saving} className="btn btn-primary">

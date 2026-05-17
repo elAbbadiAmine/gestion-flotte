@@ -28,8 +28,10 @@ const updateVehicule = async (id, data) => {
 };
 
 const deleteVehicule = async (id) => {
-  const count = await repo.remove(id);
-  if (!count) throw new Error('Véhicule non trouvé');
+  const v = await repo.findById(id);
+  if (!v) throw new Error('Véhicule non trouvé');
+  if (v.statut === 'en_mission') throw new Error('Impossible de supprimer un véhicule en mission');
+  await repo.remove(id);
   vehiculesSupprTotal.inc();
   logger.info({ id }, 'Véhicule supprimé');
   await publishEvent('vehicules', { type: 'vehicule.deleted', payload: { id } });

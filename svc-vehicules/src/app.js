@@ -27,13 +27,24 @@ const start = async () => {
   logger.info('PostgreSQL Vehicules connecté');
   await connectProducer();
   app.listen(PORT, () => logger.info({ port: PORT }, 'svc-vehicules démarré'));
-  // Kafka consumer en background : ne bloque pas le démarrage HTTP
-  connectConsumer().catch((err) => logger.error({ err }, 'Kafka consumer non disponible au démarrage'));
+  // Kafka consumer en background avec retry : ne bloque pas le démarrage HTTP
+  const startConsumerWithRetry = async (attempt = 1) => {
+    try {
+      await connectConsumer();
+    } catch (err) {
+      const delay = Math.min(attempt * 5000, 30000);
+      logger.error({ err, attempt, delay }, 'Kafka consumer échec — retry dans ' + delay + 'ms');
+      setTimeout(() => startConsumerWithRetry(attempt + 1), delay);
+    }
+  };
+  startConsumerWithRetry();
 };
 
-start().catch((err) => {
-  logger.error({ err }, 'Erreur au démarrage de svc-vehicules');
-  process.exit(1);
-});
+if (require.main === module) {
+  start().catch((err) => {
+    logger.error({ err }, 'Erreur au démarrage de svc-vehicules');
+    process.exit(1);
+  });
+}
 
 module.exports = app;

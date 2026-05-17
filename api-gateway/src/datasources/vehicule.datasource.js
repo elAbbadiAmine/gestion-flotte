@@ -29,8 +29,12 @@ const update = async (id, input) => {
 };
 
 const remove = async (id) => {
-  await axios.delete(`${BASE_URL}/api/v1/vehicules/${id}`);
-  return true;
+  try {
+    await axios.delete(`${BASE_URL}/api/v1/vehicules/${id}`);
+    return true;
+  } catch (e) {
+    throw new Error(e.response?.data?.error || e.message);
+  }
 };
 
 module.exports = { getAll, getById, create, update, remove };
