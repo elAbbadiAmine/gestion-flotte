@@ -1,6 +1,7 @@
 mode: deployment
 image:
   repository: otel/opentelemetry-collector-contrib
+  tag: "0.123.0"
 config:
   receivers:
     otlp:
@@ -12,9 +13,8 @@ config:
   processors:
     batch: {}
   exporters:
-    otlp:
-      # Jaeger all-in-one dans namespace monitoring
-      endpoint: jaeger-collector.monitoring.svc.cluster.local:4317
+    otlp/jaeger:
+      endpoint: jaeger.flotte-dev.svc.cluster.local:4317
       tls:
         insecure: true
     prometheus:
@@ -26,7 +26,7 @@ config:
       traces:
         receivers: [otlp]
         processors: [batch]
-        exporters: [otlp, debug]
+        exporters: [otlp/jaeger, debug]
       metrics:
         receivers: [otlp]
         processors: [batch]
