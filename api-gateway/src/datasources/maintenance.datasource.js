@@ -56,4 +56,9 @@ const annuler = async (id, motif) => {
   return res.data.data;
 };
 
-module.exports = { getAll, getById, getHistorique, getAlertes, create, update, demarrer, terminer, annuler };
+const remove = async (id) => {
+  await axios.delete(`${BASE_URL}/api/v1/maintenances/${id}`);
+  return true;
+};
+
+module.exports = { getAll, getById, getHistorique, getAlertes, create, update, demarrer, terminer, annuler, remove };

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: svc-maintenance
-        image: svc-maintenance:v1
+        image: svc-maintenance:v4
         imagePullPolicy: Never
         ports:
         - containerPort: 3003

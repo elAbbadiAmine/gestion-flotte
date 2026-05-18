@@ -34,7 +34,7 @@ const deleteVehicule = async (id) => {
   await repo.remove(id);
   vehiculesSupprTotal.inc();
   logger.info({ id }, 'Véhicule supprimé');
-  await publishEvent('vehicules', { type: 'vehicule.deleted', payload: { id } });
+  await publishEvent('vehicules', { type: 'vehicule.deleted', payload: { id, immatriculation: v.immatriculation } });
 };
 
 module.exports = { getAllVehicules, getVehiculeById, createVehicule, updateVehicule, deleteVehicule };

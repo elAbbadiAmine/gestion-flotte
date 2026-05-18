@@ -24,7 +24,10 @@ const MAP = {
   critique:            'Critique',
   maintenance_planifiee: 'Maintenance planifiée',
   maintenance_terminee:  'Maintenance terminée',
+  maintenance_annulee:   'Maintenance annulée',
+  maintenance_supprimee: 'Maintenance supprimée',
   vehicule_supprime:     'Véhicule supprimé',
+  conducteur_supprime:   'Conducteur supprimé',
   geofencing:            'Geofencing',
 }
 

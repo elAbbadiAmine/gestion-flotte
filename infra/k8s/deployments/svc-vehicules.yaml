@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: svc-vehicules
-          image: svc-vehicules:v8
+          image: svc-vehicules:v9
           imagePullPolicy: Never
           ports:
             - containerPort: 3001

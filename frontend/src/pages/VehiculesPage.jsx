@@ -2,7 +2,10 @@ import { useQuery, useMutation, gql } from '@apollo/client'
 import { useState } from 'react'
 import { canManageFleet } from '../utils/roles'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { Pagination } from '../components/Pagination'
 import { label } from '../utils/labels'
+
+const PAGE_SIZE = 10
 
 const GET_VEHICULES = gql`
   query GetVehicules {
@@ -15,6 +18,12 @@ const GET_VEHICULES = gql`
       statut
       kilometrage
     }
+  }
+`
+
+const GET_CONDUCTEURS = gql`
+  query GetConducteursEnMission {
+    conducteurs { id nom prenom vehiculeId }
   }
 `
 
@@ -53,6 +62,12 @@ const FIELDS = [
 
 export function VehiculesPage() {
   const { loading, error, data, refetch } = useQuery(GET_VEHICULES, { fetchPolicy: 'network-only' })
+  const { data: dataC } = useQuery(GET_CONDUCTEURS)
+  const conducteurParVehicule = Object.fromEntries(
+    (dataC?.conducteurs ?? [])
+      .filter(c => c.vehiculeId)
+      .map(c => [c.vehiculeId, `${c.prenom} ${c.nom}`])
+  )
   const [modal, setModal] = useState(null)
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -60,6 +75,7 @@ export function VehiculesPage() {
   const [confirm, setConfirm] = useState(null)
 
   const peutModifier = canManageFleet()
+  const [page, setPage] = useState(1)
 
   const [createVehicule] = useMutation(CREATE_VEHICULE)
   const [updateVehicule] = useMutation(UPDATE_VEHICULE)
@@ -119,11 +135,12 @@ export function VehiculesPage() {
               <th>Année</th>
               <th>Statut</th>
               <th>Kilométrage</th>
+              <th>Conducteur en mission</th>
               {peutModifier && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
-            {data.vehicules.map((v) => (
+            {data.vehicules.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((v) => (
               <tr key={v.id}>
                 <td style={{ fontWeight: 500 }}>{v.immatriculation}</td>
                 <td>{v.marque}</td>
@@ -131,6 +148,11 @@ export function VehiculesPage() {
                 <td>{v.annee}</td>
                 <td><span className={`badge badge-${v.statut}`}>{label(v.statut)}</span></td>
                 <td>{v.kilometrage.toLocaleString()} km</td>
+                <td>
+                  {conducteurParVehicule[v.id]
+                    ? <span style={{ color: '#f59e0b', fontWeight: 500 }}>{conducteurParVehicule[v.id]}</span>
+                    : <span style={{ color: '#94a3b8' }}>—</span>}
+                </td>
                 {peutModifier && (
                   <td>
                     <div className="td-actions">
@@ -143,6 +165,7 @@ export function VehiculesPage() {
             ))}
           </tbody>
         </table>
+        <Pagination page={page} total={data.vehicules.length} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
 
       {confirm && (

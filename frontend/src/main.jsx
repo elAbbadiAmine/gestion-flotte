@@ -2,8 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
+import { onError } from '@apollo/client/link/error'
 import App from './App.jsx'
 import keycloak from './keycloak.js'
+import { notifyNetworkError } from './network.js'
 import './index.css'
 
 keycloak.init({ onLoad: 'login-required', pkceMethod: 'S256', checkLoginIframe: false }).then(() => {
@@ -16,8 +18,12 @@ keycloak.init({ onLoad: 'login-required', pkceMethod: 'S256', checkLoginIframe: 
     }
   })
 
+  const errorLink = onError(({ networkError }) => {
+    if (networkError) notifyNetworkError()
+  })
+
   const client = new ApolloClient({
-    link: authLink.concat(httpLink),
+    link: errorLink.concat(authLink.concat(httpLink)),
     cache: new InMemoryCache(),
   })
 

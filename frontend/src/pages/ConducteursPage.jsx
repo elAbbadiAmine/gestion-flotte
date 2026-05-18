@@ -2,7 +2,10 @@ import { useQuery, useMutation, gql } from '@apollo/client'
 import { useState } from 'react'
 import { canManageFleet } from '../utils/roles'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { Pagination } from '../components/Pagination'
 import { label } from '../utils/labels'
+
+const PAGE_SIZE = 10
 
 const GET_CONDUCTEURS = gql`
   query GetConducteurs {
@@ -73,6 +76,7 @@ export function ConducteursPage() {
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
   const [formError, setFormError] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [missionForm, setMissionForm] = useState({ vehiculeId: '', missionId: '' })
@@ -216,7 +220,7 @@ export function ConducteursPage() {
             </tr>
           </thead>
           <tbody>
-            {data.conducteurs.map((c) => (
+            {data.conducteurs.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((c) => (
               <tr key={c.id}>
                 <td style={{ fontWeight: 500 }}>{c.nom}</td>
                 <td>{c.prenom}</td>
@@ -247,6 +251,7 @@ export function ConducteursPage() {
             ))}
           </tbody>
         </table>
+        <Pagination page={page} total={data.conducteurs.length} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
 
       {confirm && (

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: svc-conducteurs
-          image: svc-conducteurs:v7
+          image: svc-conducteurs:v8
           imagePullPolicy: Never
           ports:
             - containerPort: 3002

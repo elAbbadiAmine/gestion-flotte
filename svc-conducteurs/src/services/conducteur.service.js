@@ -47,7 +47,7 @@ const deleteConducteur = async (id) => {
   await repo.remove(id);
   conducteursSupprTotal.inc();
   logger.info({ id }, 'Conducteur supprimé');
-  await publishEvent('conducteurs', { type: 'conducteur.deleted', payload: { id } });
+  await publishEvent('conducteurs', { type: 'conducteur.deleted', payload: { id, nom: c.nom, prenom: c.prenom } });
   if (vehiculeId) {
     logger.info({ id, vehiculeId }, 'Conducteur supprimé — libération véhicule');
     await publishEvent('missions', {

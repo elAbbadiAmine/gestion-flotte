@@ -2,6 +2,10 @@ import { useQuery, useMutation, gql } from '@apollo/client'
 import { useState } from 'react'
 import { canManageMaintenance } from '../utils/roles'
 import { label } from '../utils/labels'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { Pagination } from '../components/Pagination'
+
+const PAGE_SIZE = 10
 
 const GET_VEHICULES = gql`
   query GetVehiculesForMaintenance {
@@ -59,6 +63,12 @@ const ANNULER_MAINTENANCE = gql`
   }
 `
 
+const DELETE_MAINTENANCE = gql`
+  mutation DeleteMaintenance($id: ID!) {
+    deleteMaintenance(id: $id)
+  }
+`
+
 const TYPES = ['revision', 'reparation', 'controle_technique', 'pneus', 'autre']
 
 const statutEffectif = (m) => {
@@ -82,7 +92,9 @@ export function MaintenancePage() {
   const vehiculeMap = Object.fromEntries(vehicules.map(v => [v.id, v.immatriculation]))
 
   const [modal, setModal]           = useState(null)
+  const [confirm, setConfirm]       = useState(null)
   const [selected, setSelected]     = useState(null)
+  const [page, setPage]             = useState(1)
   const [formCreate, setFormCreate] = useState(EMPTY_CREATE)
   const [formEdit, setFormEdit]     = useState({ type: 'revision', datePlanifiee: '', description: '', technicien: '' })
   const [motifAnnul, setMotifAnnul] = useState('')
@@ -95,6 +107,7 @@ export function MaintenancePage() {
   const [updateMaintenance]  = useMutation(UPDATE_MAINTENANCE)
   const [terminerMaintenance] = useMutation(TERMINER_MAINTENANCE)
   const [annulerMaintenance]  = useMutation(ANNULER_MAINTENANCE)
+  const [deleteMaintenance]   = useMutation(DELETE_MAINTENANCE)
 
   const openCreate = () => { setFormCreate(EMPTY_CREATE); setErrMsg(''); setModal('create') }
 
@@ -159,6 +172,22 @@ export function MaintenancePage() {
     } finally { setSaving(false) }
   }
 
+  const handleDelete = (m) => {
+    setConfirm({
+      message: `Supprimer la maintenance "${label(m.type)}" ?`,
+      onConfirm: async () => {
+        setConfirm(null)
+        setSaving(true)
+        try {
+          await deleteMaintenance({ variables: { id: m.id } })
+          await refetch()
+        } catch (err) {
+          alert(err.message)
+        } finally { setSaving(false) }
+      },
+    })
+  }
+
   const handleAnnuler = async (e) => {
     e.preventDefault()
     setSaving(true); setErrMsg('')
@@ -197,7 +226,7 @@ export function MaintenancePage() {
             </tr>
           </thead>
           <tbody>
-            {data.maintenances.map((m) => (
+            {data.maintenances.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map((m) => (
               <tr key={m.id}>
                 <td style={{ fontWeight: 500 }}>{vehiculeMap[m.vehiculeId] ?? m.vehiculeId.slice(0, 8) + '…'}</td>
                 <td>{label(m.type)}</td>
@@ -222,7 +251,7 @@ export function MaintenancePage() {
                       </>
                     )}
                     {(m.statut === 'terminee' || m.statut === 'annulee') && (
-                      <span style={{ color: '#94a3b8', fontSize: 12 }}>—</span>
+                      <button onClick={() => handleDelete(m)} disabled={saving} className="btn btn-danger btn-sm">Supprimer</button>
                     )}
                   </td>
                 )}
@@ -230,6 +259,7 @@ export function MaintenancePage() {
             ))}
           </tbody>
         </table>
+        <Pagination page={page} total={data.maintenances.length} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
 
       {/* Modal création */}
@@ -329,6 +359,14 @@ export function MaintenancePage() {
             </form>
           </div>
         </div>
+      )}
+
+      {confirm && (
+        <ConfirmModal
+          message={confirm.message}
+          onConfirm={confirm.onConfirm}
+          onCancel={() => setConfirm(null)}
+        />
       )}
 
       {/* Modal annuler */}

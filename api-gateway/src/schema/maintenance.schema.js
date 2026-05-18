@@ -57,6 +57,7 @@ const typeDefs = gql`
     updateMaintenance(id: ID!, input: UpdateMaintenanceInput!): Maintenance!
     terminerMaintenance(id: ID!, input: TerminerMaintenanceInput!): Maintenance!
     annulerMaintenance(id: ID!, motif: String): Maintenance!
+    deleteMaintenance(id: ID!): Boolean!
   }
 `;
 module.exports = typeDefs;

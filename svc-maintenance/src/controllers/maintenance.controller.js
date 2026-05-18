@@ -86,4 +86,15 @@ const update = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getById, getHistorique, getAlertes, create, demarrer, terminer, annuler, update };
+const remove = async (req, res) => {
+  try {
+    await service.deleteMaintenance(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    if (err.message === 'Maintenance non trouvée') return res.status(404).json({ success: false, error: err.message });
+    if (isErreur400(err.message) || err.message.includes('supprimées')) return res.status(400).json({ success: false, error: err.message });
+    throw err;
+  }
+};
+
+module.exports = { getAll, getById, getHistorique, getAlertes, create, demarrer, terminer, annuler, update, remove };

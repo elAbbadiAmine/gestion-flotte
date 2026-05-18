@@ -28,6 +28,33 @@ const handlers = {
       source: 'maintenance',
     });
   },
+  'maintenance.supprimee': async (payload) => {
+    await repo.create({
+      type: 'maintenance_supprimee',
+      niveau: 'info',
+      vehiculeId: payload.vehiculeId || null,
+      message: `Maintenance ${payload.type || ''} (${payload.statut || ''}) supprimée`,
+      source: 'maintenance',
+    });
+  },
+  'maintenance.annulee': async (payload) => {
+    await repo.create({
+      type: 'maintenance_annulee',
+      niveau: 'warning',
+      vehiculeId: payload.vehiculeId || null,
+      message: `Maintenance ${payload.type || ''} annulée${payload.datePlanifiee ? ` (prévue le ${String(payload.datePlanifiee).slice(0, 10)})` : ''}`,
+      source: 'maintenance',
+    });
+  },
+  'conducteur.deleted': async (payload) => {
+    await repo.create({
+      type: 'conducteur_supprime',
+      niveau: 'warning',
+      vehiculeId: null,
+      message: `Conducteur ${payload.prenom || ''} ${payload.nom || payload.id} supprimé`,
+      source: 'conducteurs',
+    });
+  },
   'vehicule.deleted': async (payload) => {
     await repo.create({
       type: 'vehicule_supprime',
@@ -53,7 +80,7 @@ const handlers = {
 
 const connectConsumer = async () => {
   await consumer.connect();
-  await consumer.subscribe({ topics: ['maintenance', 'vehicules', 'localisation'], fromBeginning: false });
+  await consumer.subscribe({ topics: ['maintenance', 'vehicules', 'localisation', 'conducteurs'], fromBeginning: false });
   await consumer.run({
     eachMessage: async ({ topic, message }) => {
       try {

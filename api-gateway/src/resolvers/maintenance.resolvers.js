@@ -9,6 +9,7 @@ const resolvers = {
     updateMaintenance:   async (_, { id, input }, { headers }) => ds.update(id, input, headers),
     terminerMaintenance: async (_, { id, input }) => ds.terminer(id, input),
     annulerMaintenance:  async (_, { id, motif }) => ds.annuler(id, motif),
+    deleteMaintenance:   async (_, { id }) => ds.remove(id),
   },
 };
 module.exports = resolvers;

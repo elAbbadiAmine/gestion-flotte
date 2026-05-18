@@ -14,5 +14,6 @@ router.put('/:id', authenticate, authorize('admin', 'manager', 'technicien'), ct
 router.post('/:id/demarrer', authenticate, authorize('admin', 'manager', 'technicien'), ctrl.demarrer);
 router.post('/:id/terminer', authenticate, authorize('admin', 'manager', 'technicien'), ctrl.terminer);
 router.post('/:id/annuler',  authenticate, authorize('admin', 'manager'), ctrl.annuler);
+router.delete('/:id',        authenticate, authorize('admin', 'manager'), ctrl.remove);
 
 module.exports = router;

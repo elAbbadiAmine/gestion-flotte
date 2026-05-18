@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: svc-evenements
-        image: svc-evenements:v1
+        image: svc-evenements:v4
         imagePullPolicy: Never
         ports:
         - containerPort: 3005

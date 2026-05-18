@@ -14,9 +14,9 @@ const client = new proto.LocalisationService(
 );
 
 const VEHICULES = [
-  { id: '11111111-0000-0000-0000-000000000001', lat: 49.4432, lon: 1.0999 }, // RO-001-AA Clio — Rouen centre
-  { id: '11111111-0000-0000-0000-000000000002', lat: 49.4380, lon: 1.0900 }, // RO-002-BB 308 — Rouen
-  { id: '11111111-0000-0000-0000-000000000004', lat: 49.9254, lon: 1.0762 }, // RO-004-DD Kangoo — Dieppe (hors zone)
+  { id: 'f1f9c031-88a7-47cb-9df0-0f7e53124c3d', lat: 49.4432, lon: 1.0999 }, // RO-001-AA — Rouen centre
+  { id: '776959a0-d81d-44eb-846e-54e8dee61475', lat: 49.4380, lon: 1.0900 }, // RO-003-BB — Rouen
+  { id: 'be9fa1eb-db46-4d1e-b963-388b16eec383', lat: 49.9254, lon: 1.0762 }, // RO-005-EE — Dieppe (hors zone)
 ];
 
 const simuler = () => {

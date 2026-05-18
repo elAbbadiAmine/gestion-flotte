@@ -52,8 +52,22 @@ const annulerMaintenance = async (id, motif) => {
   if (i.statut === 'terminee') throw new Error('Impossible d\'annuler une maintenance terminée');
   const updated = await repo.update(id, { statut: 'annulee', description: motif || i.description });
   logger.info({ id, vehiculeId: updated.vehiculeId }, 'Maintenance annulée');
-  await publishEvent('maintenance', { type: 'maintenance.annulee', payload: { vehiculeId: updated.vehiculeId, maintenanceId: id } });
+  await publishEvent('maintenance', { type: 'maintenance.annulee', payload: { vehiculeId: updated.vehiculeId, maintenanceId: id, type: updated.type, datePlanifiee: updated.datePlanifiee } });
   return updated;
+};
+
+const deleteMaintenance = async (id) => {
+  const i = await repo.findById(id);
+  if (!i) throw new Error('Maintenance non trouvée');
+  if (i.statut !== 'terminee' && i.statut !== 'annulee')
+    throw new Error('Seules les maintenances terminées ou annulées peuvent être supprimées');
+  await repo.remove(id);
+  logger.info({ id }, 'Maintenance supprimée');
+  await publishEvent('maintenance', {
+    type: 'maintenance.supprimee',
+    payload: { vehiculeId: i.vehiculeId, maintenanceId: id, type: i.type, statut: i.statut },
+  });
+  return true;
 };
 
 const updateMaintenance = async (id, data) => {
@@ -82,4 +96,5 @@ module.exports = {
   terminerMaintenance,
   annulerMaintenance,
   updateMaintenance,
+  deleteMaintenance,
 };

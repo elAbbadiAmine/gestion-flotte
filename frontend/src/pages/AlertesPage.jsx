@@ -1,7 +1,10 @@
 import { useQuery, useMutation, gql } from '@apollo/client'
 import { useState } from 'react'
 import { canSeeAlertsCritiques } from '../utils/roles'
+import { Pagination } from '../components/Pagination'
 import { label } from '../utils/labels'
+
+const PAGE_SIZE = 10
 
 const GET_ALERTES = gql`
   query GetAlertes($niveau: NiveauAlerte, $lu: Boolean) {
@@ -48,6 +51,9 @@ function replaceIds(msg, map) {
 export function AlertesPage() {
   const [filtreNiveau, setFiltreNiveau] = useState('')
   const [filtreLu, setFiltreLu] = useState('false')
+  const [page, setPage] = useState(1)
+
+  const resetPage = () => setPage(1)
 
   const voitCritiques = canSeeAlertsCritiques()
 
@@ -55,7 +61,7 @@ export function AlertesPage() {
   if (filtreNiveau) variables.niveau = filtreNiveau
   if (filtreLu !== '') variables.lu = filtreLu === 'true'
 
-  const { loading, error, data, refetch } = useQuery(GET_ALERTES, { variables })
+  const { loading, error, data, refetch } = useQuery(GET_ALERTES, { variables, fetchPolicy: 'network-only' })
   const { data: dataVehicules } = useQuery(GET_VEHICULES)
   const [marquerLue] = useMutation(MARQUER_LUE)
 
@@ -82,7 +88,7 @@ export function AlertesPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <select
             value={filtreNiveau}
-            onChange={e => setFiltreNiveau(e.target.value)}
+            onChange={e => { setFiltreNiveau(e.target.value); resetPage() }}
             className="form-select"
             style={{ width: 160 }}
           >
@@ -93,7 +99,7 @@ export function AlertesPage() {
           </select>
           <select
             value={filtreLu}
-            onChange={e => setFiltreLu(e.target.value)}
+            onChange={e => { setFiltreLu(e.target.value); resetPage() }}
             className="form-select"
             style={{ width: 160 }}
           >
@@ -124,7 +130,7 @@ export function AlertesPage() {
               </tr>
             </thead>
             <tbody>
-              {alertes.map(a => (
+              {alertes.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE).map(a => (
                 <tr key={a.id} style={{ opacity: a.lu ? 0.6 : 1 }}>
                   <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(a.createdAt)}</td>
                   <td>
@@ -132,7 +138,7 @@ export function AlertesPage() {
                   </td>
                   <td>{label(a.type)}</td>
                   <td style={{ maxWidth: 320 }}>{replaceIds(a.message, vehiculeMap)}</td>
-                  <td>{a.vehiculeId ? (vehiculeMap[a.vehiculeId] ?? a.vehiculeId.slice(0, 8) + '…') : '—'}</td>
+                  <td>{a.vehiculeId ? (vehiculeMap[a.vehiculeId] ?? a.message?.match(/Véhicule\s+([A-Z0-9-]+)\s+supprimé/)?.[1] ?? '—') : '—'}</td>
                   <td>
                     {a.lu
                       ? <span className="badge badge-lu">Lue</span>
@@ -153,6 +159,7 @@ export function AlertesPage() {
               ))}
             </tbody>
           </table>
+          <Pagination page={page} total={alertes.length} pageSize={PAGE_SIZE} onChange={setPage} />
         </div>
       )}
     </div>
