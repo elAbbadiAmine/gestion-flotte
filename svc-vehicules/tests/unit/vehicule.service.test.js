@@ -88,7 +88,7 @@ describe('VehiculeService', () => {
     await service.deleteVehicule('uuid-123');
     expect(kafka.publishEvent).toHaveBeenCalledWith('vehicules', {
       type: 'vehicule.deleted',
-      payload: { id: 'uuid-123' },
+      payload: { id: 'uuid-123', immatriculation: 'AB-123-CD' },
     });
   });
 
